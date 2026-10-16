@@ -1,2 +1,0 @@
-# ChitChatLive
-Voice chat
