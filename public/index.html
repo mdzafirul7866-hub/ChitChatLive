@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChitChat - Voice Club</title>
+    <title>ChitChat - Voice Club & Social</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="/socket.io/socket.io.js"></script>
@@ -17,7 +17,7 @@
                 <i class="fa-solid fa-comments text-4xl text-white"></i>
             </div>
             <h1 class="text-3xl font-extrabold text-pink-500">ChitChat</h1>
-            <p class="text-gray-400 text-sm mt-1">Voice Club & Admin App</p>
+            <p class="text-gray-400 text-sm mt-1">Voice Club & Social App</p>
         </div>
         <div class="space-y-4 w-full">
             <input type="text" id="usernameInput" placeholder="अपना नाम दर्ज करें..." class="w-full py-3.5 px-4 bg-gray-900 border border-gray-700 rounded-2xl text-sm focus:outline-none text-white">
@@ -26,10 +26,11 @@
         <p class="text-center text-xs text-gray-500">Version 2026</p>
     </div>
 
-    <!-- MAIN HOME PAGE -->
-    <div id="mainApp" class="hidden flex flex-col h-full w-full max-w-md bg-gray-900 shadow-2xl relative">
+    <!-- MAIN APP CONTAINER -->
+    <div id="mainApp" class="hidden flex flex-col h-full w-full max-w-md bg-gray-900 shadow-2xl relative overflow-hidden">
+        
         <!-- Top Navbar -->
-        <div class="flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800">
+        <div class="flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800 shrink-0">
             <div class="flex items-center space-x-3">
                 <div class="w-9 h-9 rounded-full bg-pink-600 flex items-center justify-center font-bold text-sm shadow" id="userAvatar">U</div>
                 <div>
@@ -38,44 +39,105 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button class="bg-gray-800 px-3 py-1 rounded-full text-xs font-bold text-yellow-400 border border-gray-700">
-                    <i class="fa-solid fa-coins"></i> <span id="coinBalance">1000</span>
+                <button onclick="alert('रिचार्ज सिस्टम जल्द आ रहा है!')" class="bg-gray-800 px-3 py-1 rounded-full text-xs font-bold text-yellow-400 border border-gray-700 flex items-center gap-1 hover:bg-gray-700">
+                    <i class="fa-solid fa-coins"></i> <span id="coinBalance">1000</span> <span class="text-[10px] bg-yellow-500 text-black px-1 rounded ml-1">+ रिचार्ज</span>
                 </button>
-                <!-- LOGOUT BUTTON -->
                 <button onclick="logoutUser()" title="लॉगआउट" class="bg-red-600/20 text-red-400 border border-red-500/30 px-2.5 py-1 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Home Content -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-4">
-            <div class="bg-gradient-to-r from-pink-900/40 to-purple-900/40 p-4 rounded-2xl border border-pink-700/50">
-                <h2 class="font-bold text-pink-400 text-sm">🔥 Official ChitChat Lounge</h2>
-                <p class="text-xs text-gray-300 mt-1">अपने दोस्तों के साथ वॉइस चैट करने के लिए नीचे रूम जॉइन करें।</p>
+        <!-- CONTENT AREA (Tabs) -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
+            
+            <!-- TAB 1: HOME -->
+            <div id="tabHome" class="space-y-4">
+                <div class="bg-gradient-to-r from-pink-900/40 to-purple-900/40 p-4 rounded-2xl border border-pink-700/50 shadow">
+                    <h2 class="font-bold text-pink-400 text-sm">🔥 Official ChitChat Lounge</h2>
+                    <p class="text-xs text-gray-300 mt-1">अपने दोस्तों के साथ वॉइस चैट करने के लिए नीचे रूम जॉइन करें या एक्सप्लोर करें।</p>
+                </div>
+
+                <div class="bg-gray-800/60 p-4 rounded-2xl border border-gray-700 flex justify-between items-center shadow">
+                    <div>
+                        <h3 class="font-bold text-sm">चैट रूम & वॉइस क्लब (9-Seat)</h3>
+                        <p class="text-xs text-gray-400">Active Members: 1,845</p>
+                    </div>
+                    <button onclick="openVoiceRoom()" class="bg-pink-600 px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-pink-500">ज्वाइन करें</button>
+                </div>
+
+                <div class="bg-gray-800/40 p-4 rounded-2xl border border-gray-800">
+                    <h3 class="text-xs font-bold text-gray-400 mb-2">📢 ताज़ा घोषणाएँ</h3>
+                    <p class="text-xs text-gray-300">"ChitChat ऐप में आपका स्वागत है! नए फीचर्स अपडेट हो चुके हैं।"</p>
+                </div>
             </div>
 
-            <div class="bg-gray-800/60 p-4 rounded-2xl border border-gray-700 flex justify-between items-center shadow">
-                <div>
-                    <h3 class="font-bold text-sm">9-Seat Voice Club</h3>
-                    <p class="text-xs text-gray-400">Active: Live Lounge</p>
+            <!-- TAB 2: EXPLORE / CLUBS -->
+            <div id="tabExplore" class="hidden space-y-4">
+                <h2 class="text-sm font-bold text-pink-400">🌐 ट्रेंडिंग क्लब्स & रूम्स</h2>
+                <div class="bg-gray-800/60 p-3 rounded-xl border border-gray-700 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-xs">⭐ शायराना महफ़िल</h4>
+                        <p class="text-[10px] text-gray-400">425 लोग सुन रहे हैं</p>
+                    </div>
+                    <button onclick="openVoiceRoom()" class="bg-purple-600 text-xs px-3 py-1.5 rounded-lg font-bold">सुने</button>
                 </div>
-                <button onclick="openVoiceRoom()" class="bg-pink-600 px-4 py-2 rounded-xl text-xs font-bold shadow-lg">रूम में जाएँ</button>
+                <div class="bg-gray-800/60 p-3 rounded-xl border border-gray-700 flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-xs">🎵 म्यूज़िक जैम पार्टी</h4>
+                        <p class="text-[10px] text-gray-400">610 लोग सुन रहे हैं</p>
+                    </div>
+                    <button onclick="openVoiceRoom()" class="bg-purple-600 text-xs px-3 py-1.5 rounded-lg font-bold">सुने</button>
+                </div>
             </div>
+
+            <!-- TAB 3: MESSAGES (Inbox) -->
+            <div id="tabMessages" class="hidden space-y-3">
+                <h2 class="text-sm font-bold text-pink-400">💬 पर्सनल मैसेज (Inbox)</h2>
+                <div class="bg-gray-800/50 p-3 rounded-xl border border-gray-800 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold">V</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between"><h4 class="text-xs font-bold">Vikram K.</h4><span class="text-[9px] text-gray-500">2:45 PM</span></div>
+                        <p class="text-[11px] text-gray-400 truncate">Hey, are you joining the team audio call at 3?</p>
+                    </div>
+                </div>
+                <div class="bg-gray-800/50 p-3 rounded-xl border border-gray-800 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-pink-600 flex items-center justify-center font-bold">P</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between"><h4 class="text-xs font-bold">Priya</h4><span class="text-[9px] text-gray-500">Yesterday</span></div>
+                        <p class="text-[11px] text-gray-400 truncate">Let's check the permission rules.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: PROFILE -->
+            <div id="tabProfile" class="hidden space-y-4 text-center py-4">
+                <div class="w-20 h-20 bg-pink-600 rounded-full mx-auto flex items-center justify-center text-2xl font-bold shadow-xl" id="profileBigAvatar">U</div>
+                <h2 id="profileUsername" class="text-lg font-bold text-pink-400">User</h2>
+                <p class="text-xs text-gray-400">Active ChitChat Member</p>
+                <div class="bg-gray-800/60 p-4 rounded-2xl border border-gray-700 max-w-xs mx-auto text-left space-y-2 text-xs">
+                    <div class="flex justify-between"><span>Total Coins:</span> <span class="text-yellow-400 font-bold">1000 🪙</span></div>
+                    <div class="flex justify-between"><span>Account Status:</span> <span class="text-green-400">Verified ✅</span></div>
+                </div>
+                <button onclick="logoutUser()" class="bg-red-600 px-6 py-2 rounded-xl text-xs font-bold shadow-lg">लॉगआउट करें</button>
+            </div>
+
         </div>
 
-        <!-- Bottom Navigation Bar -->
-        <div class="flex justify-around items-center p-3 bg-gray-900 border-t border-gray-800 text-xs">
-            <button onclick="switchTab('home')" class="text-pink-500 flex flex-col items-center"><i class="fa-solid fa-house text-base"></i>Home</button>
-            <button onclick="switchTab('messages')" class="text-gray-400 flex flex-col items-center"><i class="fa-solid fa-message text-base"></i>Messages</button>
-            <button onclick="switchTab('profile')" class="text-gray-400 flex flex-col items-center"><i class="fa-solid fa-user text-base"></i>Profile</button>
+        <!-- BOTTOM NAVIGATION BAR -->
+        <div class="absolute bottom-0 left-0 right-0 flex justify-around items-center p-3 bg-gray-900 border-t border-gray-800 text-xs shrink-0 z-20">
+            <button onclick="switchTab('home')" id="navHome" class="text-pink-500 flex flex-col items-center gap-1"><i class="fa-solid fa-house text-base"></i><span>Home</span></button>
+            <button onclick="switchTab('explore')" id="navExplore" class="text-gray-400 flex flex-col items-center gap-1"><i class="fa-solid fa-compass text-base"></i><span>Explore</span></button>
+            <button onclick="openVoiceRoom()" class="bg-pink-600 w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg -mt-4 border-4 border-gray-900"><i class="fa-solid fa-microphone text-sm"></i></button>
+            <button onclick="switchTab('messages')" id="navMessages" class="text-gray-400 flex flex-col items-center gap-1"><i class="fa-solid fa-message text-base"></i><span>Messages</span></button>
+            <button onclick="switchTab('profile')" id="navProfile" class="text-gray-400 flex flex-col items-center gap-1"><i class="fa-solid fa-user text-base"></i><span>Profile</span></button>
         </div>
 
         <!-- VOICE ROOM MODAL -->
-        <div id="viewVoiceRoom" class="hidden absolute inset-0 bg-gray-900 z-30 flex flex-col p-4">
+        <div id="viewVoiceRoom" class="hidden absolute inset-0 bg-gray-900 z-40 flex flex-col p-4">
             <div class="flex items-center justify-between border-b border-gray-800 pb-3">
-                <button onclick="closeVoiceRoom()" class="text-gray-400 text-xs font-bold flex items-center gap-1"><i class="fa-solid fa-arrow-left"></i> होम पर वापस जाएँ</button>
-                <h2 class="text-sm font-bold text-pink-400">9-Seat Voice Club</h2>
+                <button onclick="closeVoiceRoom()" class="text-gray-400 text-xs font-bold flex items-center gap-1"><i class="fa-solid fa-arrow-left"></i> वापस जाएँ</button>
+                <h2 class="text-sm font-bold text-pink-400">9-Seat Voice Club (Live)</h2>
             </div>
             <div id="seatsGrid" class="grid grid-cols-3 gap-4 py-6"></div>
             
@@ -87,13 +149,13 @@
                 <button onclick="sendMessage()" class="bg-pink-600 w-10 h-10 rounded-full flex items-center justify-center shadow-lg"><i class="fa-solid fa-paper-plane text-xs"></i></button>
             </div>
         </div>
+
     </div>
 
     <script>
         const socket = io();
         let myName = localStorage.getItem('chitchat_user') || "";
 
-        // Auto Login Check
         window.onload = () => {
             if (myName) {
                 document.getElementById('usernameInput').value = myName;
@@ -110,6 +172,8 @@
 
             document.getElementById('displayUsername').innerText = myName;
             document.getElementById('userAvatar').innerText = myName.charAt(0).toUpperCase();
+            document.getElementById('profileUsername').innerText = myName;
+            document.getElementById('profileBigAvatar').innerText = myName.charAt(0).toUpperCase();
 
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
@@ -124,16 +188,37 @@
             }
         }
 
-        function openVoiceRoom() { document.getElementById('viewVoiceRoom').classList.remove('hidden'); }
-        function closeVoiceRoom() { document.getElementById('viewVoiceRoom').classList.add('hidden'); }
-
         function switchTab(tab) {
-            if (tab === 'messages') {
-                alert("Personal Messages सेक्शन जल्द ही उपलब्ध होगा!");
-            } else if (tab === 'profile') {
-                alert("प्रोफ़ाइल: " + myName + "\nCoins: 1000");
+            // Hide all tabs
+            document.getElementById('tabHome').classList.add('hidden');
+            document.getElementById('tabExplore').classList.add('hidden');
+            document.getElementById('tabMessages').classList.add('hidden');
+            document.getElementById('tabProfile').classList.add('hidden');
+
+            // Reset nav colors
+            document.getElementById('navHome').className = "text-gray-400 flex flex-col items-center gap-1";
+            document.getElementById('navExplore').className = "text-gray-400 flex flex-col items-center gap-1";
+            document.getElementById('navMessages').className = "text-gray-400 flex flex-col items-center gap-1";
+            document.getElementById('navProfile').className = "text-gray-400 flex flex-col items-center gap-1";
+
+            // Show selected tab
+            if(tab === 'home') {
+                document.getElementById('tabHome').classList.remove('hidden');
+                document.getElementById('navHome').className = "text-pink-500 flex flex-col items-center gap-1";
+            } else if(tab === 'explore') {
+                document.getElementById('tabExplore').classList.remove('hidden');
+                document.getElementById('navExplore').className = "text-pink-500 flex flex-col items-center gap-1";
+            } else if(tab === 'messages') {
+                document.getElementById('tabMessages').classList.remove('hidden');
+                document.getElementById('navMessages').className = "text-pink-500 flex flex-col items-center gap-1";
+            } else if(tab === 'profile') {
+                document.getElementById('tabProfile').classList.remove('hidden');
+                document.getElementById('navProfile').className = "text-pink-500 flex flex-col items-center gap-1";
             }
         }
+
+        function openVoiceRoom() { document.getElementById('viewVoiceRoom').classList.remove('hidden'); }
+        function closeVoiceRoom() { document.getElementById('viewVoiceRoom').classList.add('hidden'); }
 
         socket.on('init_room', (data) => { renderSeats(data.seats); });
         socket.on('update_seats', (seats) => { renderSeats(seats); });
@@ -174,4 +259,3 @@
     </script>
 </body>
 </html>
-
