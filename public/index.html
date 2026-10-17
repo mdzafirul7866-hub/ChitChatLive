@@ -10,20 +10,31 @@
 </head>
 <body class="bg-gray-950 text-white font-sans flex justify-center items-center h-dvh overflow-hidden">
 
-    <!-- LOGIN SCREEN -->
+    <!-- LOGIN SCREEN (GMAIL / MOBILE NUMBER) -->
     <div id="loginScreen" class="fixed inset-0 bg-gray-950 z-50 flex flex-col justify-between p-6 max-w-md mx-auto">
-        <div class="text-center mt-12">
-            <div class="inline-block p-4 bg-gradient-to-tr from-pink-600 to-purple-600 rounded-3xl mb-4 shadow-xl">
+        <div class="text-center mt-10">
+            <div class="inline-block p-4 bg-gradient-to-tr from-pink-600 to-purple-600 rounded-3xl mb-3 shadow-xl">
                 <i class="fa-solid fa-comments text-4xl text-white"></i>
             </div>
             <h1 class="text-3xl font-extrabold text-pink-500">ChitChat</h1>
-            <p class="text-gray-400 text-sm mt-1">Voice Club & Social App</p>
+            <p class="text-gray-400 text-sm mt-1">Gmail / Mobile Login</p>
         </div>
-        <div class="space-y-4 w-full">
-            <input type="text" id="usernameInput" placeholder="अपना नाम दर्ज करें..." class="w-full py-3.5 px-4 bg-gray-900 border border-gray-700 rounded-2xl text-sm focus:outline-none text-white">
-            <button onclick="loginUser()" class="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl font-bold shadow-lg">लॉगइन करें 🚀</button>
+
+        <div class="space-y-3.5 w-full">
+            <div>
+                <label class="text-xs text-gray-400 mb-1 block ml-1 font-semibold">नाम (Name):</label>
+                <input type="text" id="usernameInput" placeholder="अपना नाम लिखें..." class="w-full py-3 px-4 bg-gray-900 border border-gray-700 rounded-2xl text-sm focus:outline-none focus:border-pink-500 text-white">
+            </div>
+
+            <div>
+                <label class="text-xs text-gray-400 mb-1 block ml-1 font-semibold">Gmail ID या Mobile Number:</label>
+                <input type="text" id="userContactInput" placeholder="example@gmail.com या 9876543210" class="w-full py-3 px-4 bg-gray-900 border border-gray-700 rounded-2xl text-sm focus:outline-none focus:border-pink-500 text-white">
+            </div>
+
+            <button onclick="loginUser()" class="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl font-bold shadow-lg mt-2 active:scale-98 transition">लॉगइन करें 🚀</button>
         </div>
-        <p class="text-center text-xs text-gray-500 mb-4">Version 2026</p>
+
+        <p class="text-center text-xs text-gray-500 mb-2">Version 2026</p>
     </div>
 
     <!-- MAIN APP CONTAINER -->
@@ -34,7 +45,7 @@
             <div class="flex items-center space-x-3">
                 <div class="w-9 h-9 rounded-full bg-pink-600 flex items-center justify-center font-bold text-sm shadow" id="userAvatar">U</div>
                 <div>
-                    <h3 class="font-bold text-pink-500 text-sm" id="displayUsername">User</h3>
+                    <h3 class="font-bold text-pink-500 text-sm truncate max-w-[120px]" id="displayUsername">User</h3>
                     <span class="text-[10px] text-green-400 flex items-center gap-1"><i class="fa-solid fa-circle text-[6px]"></i> Online</span>
                 </div>
             </div>
@@ -68,7 +79,7 @@
 
                 <div class="bg-gray-800/40 p-4 rounded-2xl border border-gray-800">
                     <h3 class="text-xs font-bold text-gray-400 mb-2">📢 ताज़ा घोषणाएँ</h3>
-                    <p class="text-xs text-gray-300">"ChitChat ऐप में आपका स्वागत है! नए फीचर्स अपडेट हो चुके हैं।"</p>
+                    <p class="text-xs text-gray-300">"ChitChat ऐप में आपका स्वागत है! Gmail/Mobile नंबर लॉगिन अपडेट हो चुका है।"</p>
                 </div>
             </div>
 
@@ -101,21 +112,16 @@
                         <p class="text-[11px] text-gray-400 truncate">Hey, are you joining the team audio call at 3?</p>
                     </div>
                 </div>
-                <div class="bg-gray-800/50 p-3 rounded-xl border border-gray-800 flex items-center gap-3 cursor-pointer hover:bg-gray-800" onclick="alert('प्रिया के साथ चैट खुल रही है...')">
-                    <div class="w-10 h-10 rounded-full bg-pink-600 flex items-center justify-center font-bold">P</div>
-                    <div class="flex-1">
-                        <div class="flex justify-between"><h4 class="text-xs font-bold">Priya</h4><span class="text-[9px] text-gray-500">Yesterday</span></div>
-                        <p class="text-[11px] text-gray-400 truncate">Let's check the permission rules.</p>
-                    </div>
-                </div>
             </div>
 
             <!-- TAB 4: PROFILE -->
             <div id="tabProfile" class="hidden space-y-4 text-center py-4">
                 <div class="w-20 h-20 bg-pink-600 rounded-full mx-auto flex items-center justify-center text-2xl font-bold shadow-xl" id="profileBigAvatar">U</div>
                 <h2 id="profileUsername" class="text-lg font-bold text-pink-400">User</h2>
-                <p class="text-xs text-gray-400">Active ChitChat Member</p>
+                <p class="text-xs text-gray-400" id="profileContact">email@gmail.com</p>
+                
                 <div class="bg-gray-800/60 p-4 rounded-2xl border border-gray-700 max-w-xs mx-auto text-left space-y-2 text-xs">
+                    <div class="flex justify-between"><span>Login Details:</span> <span id="profileLoginInfo" class="text-gray-300 font-medium">Gmail/Mobile</span></div>
                     <div class="flex justify-between"><span>Total Coins:</span> <span class="text-yellow-400 font-bold">1000 🪙</span></div>
                     <div class="flex justify-between"><span>Account Status:</span> <span class="text-green-400">Verified ✅</span></div>
                 </div>
@@ -155,35 +161,46 @@
     <script>
         const socket = io();
         let myName = localStorage.getItem('chitchat_user') || "";
+        let myContact = localStorage.getItem('chitchat_contact') || "";
 
         window.onload = () => {
-            if (myName) {
+            if (myName && myContact) {
                 document.getElementById('usernameInput').value = myName;
+                document.getElementById('userContactInput').value = myContact;
                 loginUser();
             }
         };
 
         function loginUser() {
-            const val = document.getElementById('usernameInput').value.trim();
-            if (!val) return alert("कृपया अपना नाम लिखें!");
-            
-            myName = val;
+            const nameVal = document.getElementById('usernameInput').value.trim();
+            const contactVal = document.getElementById('userContactInput').value.trim();
+
+            if (!nameVal) return alert("कृपया अपना नाम लिखें!");
+            if (!contactVal) return alert("कृपया अपना Gmail ID या Mobile Number लिखें!");
+
+            myName = nameVal;
+            myContact = contactVal;
+
             localStorage.setItem('chitchat_user', myName);
+            localStorage.setItem('chitchat_contact', myContact);
 
             document.getElementById('displayUsername').innerText = myName;
             document.getElementById('userAvatar').innerText = myName.charAt(0).toUpperCase();
             document.getElementById('profileUsername').innerText = myName;
             document.getElementById('profileBigAvatar').innerText = myName.charAt(0).toUpperCase();
+            document.getElementById('profileContact').innerText = myContact;
+            document.getElementById('profileLoginInfo').innerText = myContact;
 
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
 
-            socket.emit('join_room', { name: myName });
+            socket.emit('join_room', { name: myName, contact: myContact });
         }
 
         function logoutUser() {
             if (confirm("क्या आप लॉगआउट करना चाहते हैं?")) {
                 localStorage.removeItem('chitchat_user');
+                localStorage.removeItem('chitchat_contact');
                 location.reload();
             }
         }
