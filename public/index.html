@@ -2,17 +2,17 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ChitChat - Voice Club & Social</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
-<body class="bg-gray-950 text-white font-sans flex justify-center items-center h-screen overflow-hidden">
+<body class="bg-gray-950 text-white font-sans flex justify-center items-center h-dvh overflow-hidden">
 
     <!-- LOGIN SCREEN -->
     <div id="loginScreen" class="fixed inset-0 bg-gray-950 z-50 flex flex-col justify-between p-6 max-w-md mx-auto">
-        <div class="text-center mt-16">
+        <div class="text-center mt-12">
             <div class="inline-block p-4 bg-gradient-to-tr from-pink-600 to-purple-600 rounded-3xl mb-4 shadow-xl">
                 <i class="fa-solid fa-comments text-4xl text-white"></i>
             </div>
@@ -21,13 +21,13 @@
         </div>
         <div class="space-y-4 w-full">
             <input type="text" id="usernameInput" placeholder="अपना नाम दर्ज करें..." class="w-full py-3.5 px-4 bg-gray-900 border border-gray-700 rounded-2xl text-sm focus:outline-none text-white">
-            <button onclick="loginUser()" class="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl font-bold shadow-lg">लॉगिन करें 🚀</button>
+            <button onclick="loginUser()" class="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl font-bold shadow-lg">लॉगइन करें 🚀</button>
         </div>
-        <p class="text-center text-xs text-gray-500">Version 2026</p>
+        <p class="text-center text-xs text-gray-500 mb-4">Version 2026</p>
     </div>
 
     <!-- MAIN APP CONTAINER -->
-    <div id="mainApp" class="hidden flex flex-col h-full w-full max-w-md bg-gray-900 shadow-2xl relative overflow-hidden">
+    <div id="mainApp" class="hidden flex flex-col h-full w-full max-w-md bg-gray-900 shadow-2xl relative">
         
         <!-- Top Navbar -->
         <div class="flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800 shrink-0">
@@ -49,7 +49,7 @@
         </div>
 
         <!-- CONTENT AREA (Tabs) -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
+        <div class="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
             
             <!-- TAB 1: HOME -->
             <div id="tabHome" class="space-y-4">
@@ -80,28 +80,28 @@
                         <h4 class="font-bold text-xs">⭐ शायराना महफ़िल</h4>
                         <p class="text-[10px] text-gray-400">425 लोग सुन रहे हैं</p>
                     </div>
-                    <button onclick="openVoiceRoom()" class="bg-purple-600 text-xs px-3 py-1.5 rounded-lg font-bold">सुने</button>
+                    <button onclick="openVoiceRoom()" class="bg-purple-600 text-xs px-3 py-1.5 rounded-lg font-bold">सुनें</button>
                 </div>
                 <div class="bg-gray-800/60 p-3 rounded-xl border border-gray-700 flex justify-between items-center">
                     <div>
                         <h4 class="font-bold text-xs">🎵 म्यूज़िक जैम पार्टी</h4>
                         <p class="text-[10px] text-gray-400">610 लोग सुन रहे हैं</p>
                     </div>
-                    <button onclick="openVoiceRoom()" class="bg-purple-600 text-xs px-3 py-1.5 rounded-lg font-bold">सुने</button>
+                    <button onclick="openVoiceRoom()" class="bg-purple-600 text-xs px-3 py-1.5 rounded-lg font-bold">सुनें</button>
                 </div>
             </div>
 
             <!-- TAB 3: MESSAGES (Inbox) -->
             <div id="tabMessages" class="hidden space-y-3">
                 <h2 class="text-sm font-bold text-pink-400">💬 पर्सनल मैसेज (Inbox)</h2>
-                <div class="bg-gray-800/50 p-3 rounded-xl border border-gray-800 flex items-center gap-3">
+                <div class="bg-gray-800/50 p-3 rounded-xl border border-gray-800 flex items-center gap-3 cursor-pointer hover:bg-gray-800" onclick="alert('विक्रम के साथ चैट खुल रही है...')">
                     <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold">V</div>
                     <div class="flex-1">
                         <div class="flex justify-between"><h4 class="text-xs font-bold">Vikram K.</h4><span class="text-[9px] text-gray-500">2:45 PM</span></div>
                         <p class="text-[11px] text-gray-400 truncate">Hey, are you joining the team audio call at 3?</p>
                     </div>
                 </div>
-                <div class="bg-gray-800/50 p-3 rounded-xl border border-gray-800 flex items-center gap-3">
+                <div class="bg-gray-800/50 p-3 rounded-xl border border-gray-800 flex items-center gap-3 cursor-pointer hover:bg-gray-800" onclick="alert('प्रिया के साथ चैट खुल रही है...')">
                     <div class="w-10 h-10 rounded-full bg-pink-600 flex items-center justify-center font-bold">P</div>
                     <div class="flex-1">
                         <div class="flex justify-between"><h4 class="text-xs font-bold">Priya</h4><span class="text-[9px] text-gray-500">Yesterday</span></div>
@@ -124,17 +124,17 @@
 
         </div>
 
-        <!-- BOTTOM NAVIGATION BAR -->
-        <div class="absolute bottom-0 left-0 right-0 flex justify-around items-center p-3 bg-gray-900 border-t border-gray-800 text-xs shrink-0 z-20">
+        <!-- FIXED BOTTOM NAVIGATION BAR -->
+        <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md flex justify-around items-center p-3 bg-gray-900/95 backdrop-blur border-t border-gray-800 text-xs shrink-0 z-30">
             <button onclick="switchTab('home')" id="navHome" class="text-pink-500 flex flex-col items-center gap-1"><i class="fa-solid fa-house text-base"></i><span>Home</span></button>
             <button onclick="switchTab('explore')" id="navExplore" class="text-gray-400 flex flex-col items-center gap-1"><i class="fa-solid fa-compass text-base"></i><span>Explore</span></button>
-            <button onclick="openVoiceRoom()" class="bg-pink-600 w-11 h-11 rounded-full flex items-center justify-center text-white shadow-lg -mt-4 border-4 border-gray-900"><i class="fa-solid fa-microphone text-sm"></i></button>
+            <button onclick="openVoiceRoom()" class="bg-pink-600 w-12 h-12 rounded-full flex items-center justify-center text-white shadow-xl -mt-5 border-4 border-gray-900 active:scale-95 transition"><i class="fa-solid fa-microphone text-base"></i></button>
             <button onclick="switchTab('messages')" id="navMessages" class="text-gray-400 flex flex-col items-center gap-1"><i class="fa-solid fa-message text-base"></i><span>Messages</span></button>
             <button onclick="switchTab('profile')" id="navProfile" class="text-gray-400 flex flex-col items-center gap-1"><i class="fa-solid fa-user text-base"></i><span>Profile</span></button>
         </div>
 
         <!-- VOICE ROOM MODAL -->
-        <div id="viewVoiceRoom" class="hidden absolute inset-0 bg-gray-900 z-40 flex flex-col p-4">
+        <div id="viewVoiceRoom" class="hidden fixed inset-0 bg-gray-900 z-50 flex flex-col p-4 max-w-md mx-auto">
             <div class="flex items-center justify-between border-b border-gray-800 pb-3">
                 <button onclick="closeVoiceRoom()" class="text-gray-400 text-xs font-bold flex items-center gap-1"><i class="fa-solid fa-arrow-left"></i> वापस जाएँ</button>
                 <h2 class="text-sm font-bold text-pink-400">9-Seat Voice Club (Live)</h2>
@@ -189,19 +189,16 @@
         }
 
         function switchTab(tab) {
-            // Hide all tabs
             document.getElementById('tabHome').classList.add('hidden');
             document.getElementById('tabExplore').classList.add('hidden');
             document.getElementById('tabMessages').classList.add('hidden');
             document.getElementById('tabProfile').classList.add('hidden');
 
-            // Reset nav colors
             document.getElementById('navHome').className = "text-gray-400 flex flex-col items-center gap-1";
             document.getElementById('navExplore').className = "text-gray-400 flex flex-col items-center gap-1";
             document.getElementById('navMessages').className = "text-gray-400 flex flex-col items-center gap-1";
             document.getElementById('navProfile').className = "text-gray-400 flex flex-col items-center gap-1";
 
-            // Show selected tab
             if(tab === 'home') {
                 document.getElementById('tabHome').classList.remove('hidden');
                 document.getElementById('navHome').className = "text-pink-500 flex flex-col items-center gap-1";
