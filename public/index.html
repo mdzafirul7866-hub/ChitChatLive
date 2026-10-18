@@ -53,7 +53,7 @@
             <button onclick="loginUser()" class="w-full py-3.5 bg-gradient-to-r from-sky-500 to-amber-500 rounded-2xl font-bold shadow-lg mt-2 active:scale-98 transition text-white">Login Karein 🚀</button>
         </div>
 
-        <p class="text-center text-xs text-gray-500 mb-2">Version 2026.3 (Multi-Room & Mic Permission)</p>
+        <p class="text-center text-xs text-gray-500 mb-2">Version 2026.6 (Guaranteed WebRTC Voice Fix)</p>
     </div>
 
     <!-- MAIN APP CONTAINER -->
@@ -65,8 +65,11 @@
                     <img src="/logo.png" onerror="this.src='https://cdn-icons-png.flaticon.com/512/134/134937.png'" class="w-full h-full object-contain" alt="Logo">
                 </div>
                 <div>
-                    <span class="font-extrabold text-sm block leading-none"><span class="text-sky-400">Chit</span><span class="text-amber-500">Chat</span></span>
-                    <span class="text-[9px] text-gray-400" id="displayContact">Contact</span>
+                    <div class="flex items-center gap-1.5 leading-none">
+                        <span class="font-extrabold text-sm"><span class="text-sky-400">Chit</span><span class="text-amber-500">Chat</span></span>
+                        <span class="text-[10px] bg-sky-950 text-sky-300 px-1.5 py-0.5 rounded border border-sky-800" id="displayContact">Contact</span>
+                    </div>
+                    <span class="text-[9px] text-gray-400 mt-0.5 block" id="displayUsername">User</span>
                 </div>
             </div>
 
@@ -75,12 +78,6 @@
                     <i class="fa-solid fa-bell"></i>
                     <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full"></span>
                 </button>
-
-                <div class="flex items-center space-x-1.5 bg-gray-800/80 px-2.5 py-1 rounded-full border border-gray-700">
-                    <div class="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center font-bold text-[10px] text-white" id="userAvatar">U</div>
-                    <span class="font-bold text-sky-400 text-xs truncate max-w-[60px]" id="displayUsername">User</span>
-                </div>
-                
                 <button onclick="logoutUser()" title="Logout" class="bg-red-600/20 text-red-400 border border-red-500/30 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold">
                     <i class="fa-solid fa-right-from-bracket"></i>
                 </button>
@@ -92,19 +89,16 @@
             <div class="bg-gradient-to-r from-sky-900/40 to-amber-900/40 p-4 rounded-2xl border border-sky-700/40 shadow flex justify-between items-center">
                 <div>
                     <h2 class="font-bold text-sky-400 text-sm flex items-center gap-2"><i class="fa-solid fa-fire text-amber-500"></i> Apna Room Banao</h2>
-                    <p class="text-xs text-gray-300 mt-1">Apna khud ka 9-Seat VIP Club ya Live Room shuru karein!</p>
+                    <p class="text-xs text-gray-300 mt-1">Apna khud ka 9-Seat VIP Club shuru karein!</p>
                 </div>
                 <button onclick="createNewRoomPrompt()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-xl text-xs font-bold shadow-lg shrink-0">
                     <i class="fa-solid fa-plus"></i> Create Room
                 </button>
             </div>
 
-            <!-- ROOMS LIST LOBBY -->
             <div>
                 <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Active Rooms List</h3>
-                <div id="roomsListContainer" class="space-y-3">
-                    <!-- Dynamic Rooms will load here -->
-                </div>
+                <div id="roomsListContainer" class="space-y-3"></div>
             </div>
         </div>
 
@@ -130,19 +124,30 @@
         
         <div id="seatsGrid" class="grid grid-cols-3 gap-3 py-4"></div>
 
+        <!-- CONTROLS: PUSH-TO-TALK MIC & LOCAL MUSIC PICKER -->
         <div class="flex justify-between items-center bg-gray-900 p-2.5 rounded-2xl border border-gray-800 mb-2 shrink-0">
-            <button id="micToggleBtn" onclick="toggleMicrophone()" class="bg-gray-800 text-white border border-gray-700 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
+            
+            <!-- Push-To-Talk Mic Button (Press & Hold for 15s max) -->
+            <button id="pushMicBtn" 
+                class="bg-gray-800 text-white border border-gray-700 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 active:bg-green-700 active:border-green-500 transition select-none">
                 <i class="fa-solid fa-microphone-slash text-red-400" id="micIcon"></i>
-                <span id="micText">Mic Off</span>
+                <span id="micText">Dabayein & Bolein</span>
             </button>
 
-            <button onclick="playMusic()" class="bg-gray-800 border border-gray-700 text-sky-400 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1">
-                <i class="fa-solid fa-music"></i> Music
-            </button>
+            <!-- Local Downloaded Song Picker -->
+            <label class="bg-gray-800 border border-gray-700 text-sky-400 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer hover:bg-gray-700">
+                <i class="fa-solid fa-music"></i> <span id="musicBtnLabel">Mobile Song</span>
+                <input type="file" id="localAudioFile" accept="audio/*" class="hidden" onchange="playMobileSong(this)">
+            </label>
 
             <button onclick="sendGift('💃 Dance')" class="bg-pink-600/30 text-pink-400 border border-pink-500/40 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> Gift
             </button>
+        </div>
+
+        <div id="playerBox" class="hidden mb-2 bg-gray-900 p-2 rounded-xl border border-gray-800 flex items-center justify-between">
+            <span id="songTitle" class="text-[10px] text-sky-300 truncate max-w-[180px]">Song Name</span>
+            <audio id="bgMusicPlayer" controls class="h-7 w-40"></audio>
         </div>
 
         <div id="chatLog" class="flex-1 overflow-y-auto space-y-2 text-xs bg-gray-900/60 p-3 rounded-2xl border border-gray-800 my-1"></div>
@@ -153,6 +158,7 @@
         </div>
     </div>
 
+    <!-- Hidden Container for Peer Audio Playback -->
     <div id="audioContainer" class="hidden"></div>
 
     <script>
@@ -161,13 +167,16 @@
         let myContact = localStorage.getItem('chitchat_contact') || "";
         let currentRoomId = null;
         let localStream = null;
-        let isMicOn = false;
+        let isSpeaking = false;
+        let pttTimer = null;
 
         const peerConnections = {};
         const rtcConfig = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' }
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' }
             ]
         };
 
@@ -182,6 +191,8 @@
                 document.getElementById('userContactInput').value = myContact;
                 loginUser();
             }
+
+            setupPushToTalk();
         };
 
         function loginUser() {
@@ -198,7 +209,6 @@
 
             document.getElementById('displayUsername').innerText = myName;
             document.getElementById('displayContact').innerText = myContact;
-            document.getElementById('userAvatar').innerText = myName.charAt(0).toUpperCase();
 
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
@@ -224,7 +234,7 @@
             const container = document.getElementById('roomsListContainer');
             container.innerHTML = '';
             if (rooms.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">Abhi koi room nahi hai. Upar 'Create Room' par click karke naya room banayein!</p>`;
+                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-6">Abhi koi active room nahi hai. 'Create Room' par click karke room banayein!</p>`;
                 return;
             }
             rooms.forEach(room => {
@@ -232,7 +242,7 @@
                     <div class="bg-gray-800/60 p-4 rounded-2xl border border-gray-700 flex justify-between items-center shadow">
                         <div>
                             <h3 class="font-bold text-sm text-amber-400 flex items-center gap-1.5"><i class="fa-solid fa-crown"></i> ${room.roomName}</h3>
-                        <p class="text-xs text-gray-400 mt-0.5">Host: ${room.hostName} | Members: ${room.membersCount || 1}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">Host: ${room.hostName} | Members: ${room.membersCount || 1}</p>
                         </div>
                         <button onclick="joinRoom('${room.id}')" class="bg-gradient-to-r from-sky-500 to-amber-500 px-4 py-2 rounded-xl text-xs font-bold shadow-lg">Join Room</button>
                     </div>
@@ -247,6 +257,7 @@
         }
 
         function closeVoiceRoom() {
+            stopMicrophone();
             if (currentRoomId) {
                 socket.emit('leave_room', { roomId: currentRoomId });
                 currentRoomId = null;
@@ -260,10 +271,10 @@
 
         socket.on('room_state_update', (room) => {
             document.getElementById('activeRoomTitle').innerText = `👑 ${room.roomName}`;
-            renderSeats(room.seats, room.hostName);
+            renderSeats(room.seats);
         });
 
-        function renderSeats(seats, hostName) {
+        function renderSeats(seats) {
             const grid = document.getElementById('seatsGrid');
             grid.innerHTML = '';
             seats.forEach((seat, index) => {
@@ -272,45 +283,97 @@
                 let name = `Seat ${index + 1}`;
                 if (seat) {
                     cls = "w-14 h-14 rounded-full bg-amber-950 border-2 border-amber-500 flex items-center justify-center cursor-pointer shadow-lg";
-                    content = `<i class="fa-solid fa-microphone text-amber-400 text-xs"></i>`;
+                    content = `<i class="fa-solid fa-microphone text-amber-400 text-xs animate-pulse"></i>`;
                     name = seat.name;
                 }
                 grid.innerHTML += `<div class="flex flex-col items-center" onclick="requestSeat(${index})"><div class="${cls}">${content}</div><span class="text-[10px] mt-1 text-gray-300 truncate w-14 text-center">${name}</span></div>`;
             });
         }
 
-        async function toggleMicrophone() {
-            if (!isMicOn) {
+        // PUSH-TO-TALK LOGIC (15s Max Hold & Speak)
+        function setupPushToTalk() {
+            const btn = document.getElementById('pushMicBtn');
+
+            const startSpeaking = async () => {
+                if (isSpeaking || !currentRoomId) return;
                 try {
                     localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                    isMicOn = true;
+                    isSpeaking = true;
                     document.getElementById('micIcon').className = "fa-solid fa-microphone text-green-400";
-                    document.getElementById('micText').innerText = "Mic On";
+                    document.getElementById('micText').innerText = "Bol Rahe Hain...";
+                    
+                    // Broadcast to Room peers
+                    socket.emit('start_audio_stream', { roomId: currentRoomId, socketId: socket.id, name: myName });
 
-                    if (currentRoomId) {
-                        socket.emit('start_audio_stream', { roomId: currentRoomId, socketId: socket.id, name: myName });
-                    }
+                    // Auto cut after 15 seconds
+                    pttTimer = setTimeout(() => {
+                        stopMicrophone();
+                    }, 15000);
                 } catch (err) {
-                    alert("Microphone Permission Denied! Kripya Phone Settings ya App Permission se Mic Allow Karein.");
+                    alert("Mic Permission Nahi Mili! Settings check karein.");
                 }
-            } else {
-                if (localStream) {
-                    localStream.getTracks().forEach(t => t.stop());
-                }
-                isMicOn = false;
-                document.getElementById('micIcon').className = "fa-solid fa-microphone-slash text-red-400";
-                document.getElementById('micText').innerText = "Mic Off";
+            };
+
+            const stopSpeaking = () => {
+                if (!isSpeaking) return;
+                if (pttTimer) clearTimeout(pttTimer);
+                stopMicrophone();
+            };
+
+            // Touch & Mouse Events for Push-to-Talk
+            btn.addEventListener('mousedown', startSpeaking);
+            btn.addEventListener('mouseup', stopSpeaking);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); startSpeaking(); });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); stopSpeaking(); });
+        }
+
+        function stopMicrophone() {
+            if (localStream) {
+                localStream.getTracks().forEach(t => t.stop());
+                localStream = null;
+            }
+            isSpeaking = false;
+            document.getElementById('micIcon').className = "fa-solid fa-microphone-slash text-red-400";
+            document.getElementById('micText').innerText = "Dabayein & Bolein";
+        }
+
+        // LOCAL DOWNLOADED MUSIC PLAYER
+        function playMobileSong(input) {
+            const file = input.files[0];
+            if (file) {
+                const player = document.getElementById('bgMusicPlayer');
+                const title = document.getElementById('songTitle');
+                const box = document.getElementById('playerBox');
+                
+                player.src = URL.createObjectURL(file);
+                title.innerText = file.name;
+                box.classList.remove('hidden');
+                player.play();
+                
+                document.getElementById('musicBtnLabel').innerText = "Song Active";
             }
         }
 
+        // WEBRTC PEER CONNECTIONS & SIGNALING
+        socket.on('room_users_list', async (users) => {
+            users.forEach(async (userId) => {
+                if (userId !== socket.id && !peerConnections[userId]) {
+                    await createPeerConnection(userId, true);
+                }
+            });
+        });
+
         socket.on('user_joined_audio', async (data) => {
-            if (data.socketId !== socket.id) {
-                createPeerConnection(data.socketId, true);
+            if (data.socketId !== socket.id && !peerConnections[data.socketId]) {
+                await createPeerConnection(data.socketId, false);
             }
         });
 
         socket.on('webrtc_offer', async (data) => {
-            const pc = createPeerConnection(data.callerId, false);
+            let pc = peerConnections[data.callerId];
+            if (!pc) {
+                pc = createPeerConnection(data.callerId, false);
+            }
             await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
@@ -334,6 +397,8 @@
         });
 
         function createPeerConnection(targetSocketId, isOffer) {
+            if (peerConnections[targetSocketId]) return peerConnections[targetSocketId];
+
             const pc = new RTCPeerConnection(rtcConfig);
             peerConnections[targetSocketId] = pc;
 
@@ -361,6 +426,7 @@
                     document.getElementById('audioContainer').appendChild(audioElem);
                 }
                 audioElem.srcObject = event.streams[0];
+                audioElem.play().catch(e => console.log("Audio autoplay blocked:", e));
             };
 
             if (isOffer) {
@@ -373,11 +439,11 @@
             return pc;
         }
 
-        function triggerCall(type) { alert(`${type} Call Request Bheji Gayi!`); }
-        function playMusic() { alert("🎵 Local Storage se song select karke play karein!"); }
+        function triggerCall(type) { alert(`${type} Call Triggered!`); }
+        
         function sendGift(giftName) {
             if (currentRoomId) {
-                socket.emit('send_room_message', { roomId: currentRoomId, text: `🎁 Animated Gift Bheja: ${giftName}` });
+                socket.emit('send_room_message', { roomId: currentRoomId, text: `🎁 Gift Bheja: ${giftName}` });
             }
         }
 
