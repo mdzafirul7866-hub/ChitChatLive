@@ -38,7 +38,6 @@ io.on('connection', (socket) => {
             seats: Array(9).fill(null)
         };
         activeRooms[roomId] = newRoom;
-        
         io.emit('room_list_update', Object.values(activeRooms));
     });
 
@@ -48,6 +47,11 @@ io.on('connection', (socket) => {
 
         if (activeRooms[roomId]) {
             activeRooms[roomId].membersCount = (activeRooms[roomId].membersCount || 0) + 1;
+            
+            // Send existing room users list for WebRTC mesh connection
+            const roomClients = Array.from(io.sockets.adapter.rooms.get(roomId) || []);
+            socket.emit('room_users_list', roomClients);
+
             io.to(roomId).emit('room_state_update', activeRooms[roomId]);
             io.emit('room_list_update', Object.values(activeRooms));
         }
