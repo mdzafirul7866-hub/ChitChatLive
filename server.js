@@ -52,11 +52,30 @@ io.on('connection', (socket) => {
         io.emit('chat_message', { sender: user.name, text });
     });
 
+    // --- WEBRTC SIGNALING EVENTS ---
+    socket.on('start_audio_stream', (data) => {
+        io.emit('user_joined_audio', data);
+    });
+
+    socket.on('webrtc_offer', (data) => {
+        io.to(data.targetId).emit('webrtc_offer', data);
+    });
+
+    socket.on('webrtc_answer', (data) => {
+        io.to(data.targetId).emit('webrtc_answer', data);
+    });
+
+    socket.on('webrtc_ice_candidate', (data) => {
+        io.to(data.targetId).emit('webrtc_ice_candidate', data);
+    });
+    // -------------------------------
+
     socket.on('disconnect', () => {
         roomState.seats = roomState.seats.map(s => s?.id === socket.id ? null : s);
         io.emit('update_seats', roomState.seats);
+        console.log(`User disconnected: ${socket.id}`);
     });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`ye hai server pe running on port ${PORT}`));
