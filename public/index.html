@@ -2,483 +2,155 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ChitChat - 9-Seat Admin Voice & Social Club</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChitChat - Master Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <style>
-        @keyframes floatAnim {
-            0% { transform: translateY(0px) scale(1); opacity: 1; }
-            50% { transform: translateY(-30px) scale(1.2); opacity: 0.8; }
-            100% { transform: translateY(-60px) scale(0.8); opacity: 0; }
-        }
-        .gift-anim { animation: floatAnim 2.5s ease-out forwards; }
-    </style>
 </head>
-<body class="bg-gray-950 text-white font-sans flex justify-center items-center h-dvh overflow-hidden select-none">
+<body class="bg-gray-950 text-white font-sans p-6">
 
-    <!-- LOGIN / REGISTER SCREEN -->
-    <div id="loginScreen" class="fixed inset-0 bg-gray-950 z-50 flex flex-col justify-between p-6 max-w-md mx-auto">
-        <div class="text-center mt-6">
-            <div class="w-24 h-24 mx-auto bg-indigo-950 rounded-3xl flex items-center justify-center border-2 border-amber-500/50 shadow-2xl mb-3">
-                <i class="fa-solid fa-microphone-lines text-amber-400 text-4xl"></i>
+    <!-- SECURE KEY LOGIN MODAL -->
+    <div id="adminLoginModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-amber-500/50 p-6 rounded-3xl max-w-sm w-full text-center shadow-2xl">
+            <div class="w-16 h-16 bg-amber-500/20 rounded-full mx-auto flex items-center justify-center text-amber-400 text-2xl mb-3 border border-amber-500">
+                <i class="fa-solid fa-shield-halved"></i>
             </div>
-            <h1 class="text-3xl font-black tracking-wide"><span class="text-sky-400">Chit</span><span class="text-amber-500">Chat</span></h1>
-            <p class="text-gray-400 text-xs mt-1">Real-time Voice & Social Club</p>
-        </div>
-
-        <div class="space-y-3 w-full">
-            <div>
-                <label class="text-xs text-gray-400 mb-1 block font-semibold">Bhasha Chunchein (Language):</label>
-                <select id="langSelect" class="w-full py-2.5 px-4 bg-gray-900 border border-gray-700 rounded-2xl text-xs text-amber-400 focus:outline-none">
-                    <option value="hi">हिंदी (Hindi)</option>
-                    <option value="en">English</option>
-                    <option value="ur">اردو (Urdu)</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="text-xs text-gray-400 mb-1 block font-semibold">Apna Naam (Name):</label>
-                <input type="text" id="usernameInput" placeholder="Naam likhein..." class="w-full py-3 px-4 bg-gray-900 border border-gray-700 rounded-2xl text-sm focus:outline-none focus:border-amber-500 text-white">
-            </div>
-
-            <div>
-                <label class="text-xs text-gray-400 mb-1 block font-semibold">Mobile Number / Email:</label>
-                <input type="text" id="userContactInput" placeholder="Mobile ya Gmail ID..." class="w-full py-3 px-4 bg-gray-900 border border-gray-700 rounded-2xl text-sm focus:outline-none focus:border-amber-500 text-white">
-            </div>
-
-            <button onclick="loginUser()" class="w-full py-3.5 bg-gradient-to-r from-sky-500 to-amber-500 rounded-2xl font-bold shadow-lg text-white active:scale-95 transition">Enter App 🚀</button>
-        </div>
-
-        <p class="text-center text-xs text-gray-500 mb-2">Version 2026.8 • Admin Controlled Seat Room</p>
-    </div>
-
-    <!-- MAIN APP LOBBY -->
-    <div id="mainApp" class="hidden flex flex-col h-full w-full max-w-md bg-gray-900 shadow-2xl relative">
-        <!-- HEADER -->
-        <div class="flex items-center justify-between p-3.5 bg-gray-900 border-b border-gray-800 shrink-0">
-            <div class="flex items-center gap-2.5">
-                <div class="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500 flex items-center justify-center text-amber-400 font-bold text-sm" id="userAvatar">U</div>
-                <div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-extrabold text-sm text-white" id="displayUsername">User</span>
-                        <span class="text-[9px] bg-sky-950 text-sky-300 px-1.5 py-0.5 rounded border border-sky-800" id="displayContact">Contact</span>
-                    </div>
-                    <span class="text-[9px] text-gray-400 block">Status: Online</span>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <!-- NOTIFICATION BELL -->
-                <button onclick="showNotifications()" class="relative bg-gray-800 text-amber-400 border border-gray-700 w-8 h-8 rounded-full flex items-center justify-center text-xs">
-                    <i class="fa-solid fa-bell"></i>
-                    <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
-                <button onclick="logoutUser()" class="bg-red-600/20 text-red-400 border border-red-500/30 w-8 h-8 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-right-from-bracket"></i></button>
-            </div>
-        </div>
-
-        <!-- MAIN TAB CONTENT AREA -->
-        <div id="tabContentArea" class="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
+            <h2 class="text-xl font-black text-white">Owner Admin Access</h2>
+            <p class="text-xs text-gray-400 mt-1 mb-4">Secure Secret Key darj karein</p>
             
-            <!-- HOME TAB: ROOMS LIST -->
-            <div id="homeTab">
-                <div class="bg-gradient-to-r from-sky-900/40 to-amber-900/40 p-4 rounded-2xl border border-sky-700/40 flex justify-between items-center mb-4">
-                    <div>
-                        <h2 class="font-bold text-sky-400 text-sm"><i class="fa-solid fa-crown text-amber-500"></i> Apna Group/Room Banao</h2>
-                        <p class="text-xs text-gray-300 mt-0.5">9-Seat VIP Admin Controlled Room</p>
-                    </div>
-                    <button onclick="createNewGroupRoom()" class="bg-amber-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-lg">+ Create</button>
-                </div>
-
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Live Group Rooms</h3>
-                <div id="roomsListContainer" class="space-y-3"></div>
-            </div>
-
-            <!-- INBOX TAB: PERSONAL & GROUP CHATS -->
-            <div id="inboxTab" class="hidden space-y-3">
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Personal & Group Chats</h3>
-                <div class="bg-gray-800/60 p-3 rounded-2xl border border-gray-700 flex justify-between items-center cursor-pointer" onclick="openPrivateChat('Support')">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-sky-600 rounded-full flex items-center justify-center font-bold text-sm">S</div>
-                        <div>
-                            <h4 class="text-xs font-bold text-white">ChitChat Support</h4>
-                            <p class="text-[10px] text-gray-400">Welcome to ChitChat Voice Club!</p>
-                        </div>
-                    </div>
-                    <span class="text-[9px] text-gray-500">Just now</span>
-                </div>
-            </div>
-
-            <!-- GIFTS TAB -->
-            <div id="giftsTab" class="hidden text-center py-10">
-                <i class="fa-solid fa-gift text-5xl text-pink-500 mb-3"></i>
-                <h3 class="text-sm font-bold text-white">Gifts Store & Locker</h3>
-                <p class="text-xs text-gray-400 mt-1">Yahan aapke saare animated aur freeze gifts jama honge.</p>
-            </div>
-
-            <!-- PROFILE TAB -->
-            <div id="profileTab" class="hidden space-y-4">
-                <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 text-center">
-                    <div class="w-16 h-16 bg-amber-500 rounded-full mx-auto flex items-center justify-center font-black text-xl text-black mb-2" id="profileAvatarBig">U</div>
-                    <h3 class="font-bold text-sm text-white" id="profileName">User</h3>
-                    <p class="text-xs text-gray-400" id="profileContact">Contact Info</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- BOTTOM NAVIGATION BAR -->
-        <div class="fixed bottom-0 max-w-md w-full bg-gray-900 border-t border-gray-800 flex justify-around py-2.5 px-4 text-gray-400">
-            <button onclick="switchTab('home')" id="navHome" class="flex flex-col items-center text-amber-500"><i class="fa-solid fa-house text-sm"></i><span class="text-[9px] mt-0.5 font-bold">Home</span></button>
-            <button onclick="switchTab('inbox')" id="navInbox" class="flex flex-col items-center"><i class="fa-solid fa-comments text-sm"></i><span class="text-[9px] mt-0.5">Inbox</span></button>
-            <button onclick="switchTab('gifts')" id="navGifts" class="flex flex-col items-center"><i class="fa-solid fa-gift text-sm text-pink-400"></i><span class="text-[9px] mt-0.5">Gifts</span></button>
-            <button onclick="switchTab('profile')" id="navProfile" class="flex flex-col items-center"><i class="fa-solid fa-user text-sm"></i><span class="text-[9px] mt-0.5">Profile</span></button>
+            <input type="password" id="secretKeyInput" placeholder="Secret Key likhein..." class="w-full py-3 px-4 bg-gray-800 border border-gray-700 rounded-xl text-sm mb-3 text-center text-amber-400 focus:outline-none focus:border-amber-500">
+            <button onclick="verifyAdminKey()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-black font-extrabold rounded-xl text-sm shadow-lg transition">Unlock Panel 🚀</button>
+            <p id="errorMsg" class="text-xs text-red-400 mt-2 font-bold"></p>
         </div>
     </div>
 
-    <!-- 9-SEAT VOICE ROOM MODAL -->
-    <div id="viewVoiceRoom" class="hidden fixed inset-0 bg-gray-950 z-50 flex flex-col p-4 max-w-md mx-auto">
-        <!-- ROOM TOP HEADER WITH CALL CONTROLS -->
-        <div class="flex items-center justify-between border-b border-gray-800 pb-3 shrink-0">
-            <button onclick="closeVoiceRoom()" class="text-gray-400 text-xs font-bold"><i class="fa-solid fa-arrow-left"></i> Wapas</button>
-            <span class="text-xs font-extrabold text-amber-500 truncate max-w-[150px]" id="activeRoomTitle">👑 VIP Room</span>
-            
-            <div class="flex items-center gap-2">
-                <button onclick="startDirectCall('Audio')" title="Audio Call" class="bg-green-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs shadow"><i class="fa-solid fa-phone"></i></button>
-                <button onclick="startDirectCall('Video')" title="Video Call" class="bg-blue-600 text-white w-7 h-7 rounded-full flex items-center justify-center text-xs shadow"><i class="fa-solid fa-video"></i></button>
+    <!-- MASTER ADMIN DASHBOARD -->
+    <div id="adminDashboard" class="hidden max-w-6xl mx-auto space-y-6">
+        <div class="flex justify-between items-center bg-gray-900 p-4 rounded-2xl border border-gray-800 shadow">
+            <div>
+                <h1 class="text-xl font-black text-amber-400"><i class="fa-solid fa-crown"></i> ChitChat Master Admin Control</h1>
+                <p class="text-xs text-gray-400">Total System Control & Moderation</p>
+            </div>
+            <button onclick="location.reload()" class="bg-red-600/20 border border-red-500 text-red-400 px-4 py-2 rounded-xl text-xs font-bold">Lock Panel</button>
+        </div>
+
+        <!-- GLOBAL ANNOUNCEMENT SECTION -->
+        <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800 space-y-2">
+            <h3 class="text-xs font-bold text-sky-400 uppercase tracking-wider"><i class="fa-solid fa-bullhorn"></i> Global Flash Announcement</h3>
+            <div class="flex gap-2">
+                <input type="text" id="globalMsgInput" placeholder="Poori app ke liye flash message likhein..." class="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none">
+                <button onclick="sendGlobalAnnouncement()" class="bg-sky-500 text-black font-bold px-4 py-2 rounded-xl text-xs">Broadcast</button>
             </div>
         </div>
 
-        <!-- 9 SEATS GRID (HOST CONTROLLED) -->
-        <div id="seatsGrid" class="grid grid-cols-3 gap-3 py-4 shrink-0"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- REGISTERED USERS MANAGEMENT -->
+            <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-users"></i> Registered Users List</h3>
+                <div id="usersListContainer" class="space-y-2 max-h-80 overflow-y-auto"></div>
+            </div>
 
-        <!-- ANIMATED GIFT EFFECT OVERLAY AREA -->
-        <div id="giftEffectArea" class="relative h-0 w-full overflow-visible pointer-events-none z-40"></div>
-
-        <!-- CONTROL BUTTONS: PUSH-TO-TALK MIC & CUSTOM GIFTS -->
-        <div class="flex justify-between items-center bg-gray-900 p-2.5 rounded-2xl border border-gray-800 mb-2 shrink-0 gap-2">
-            
-            <!-- CIRCULAR WALKIE-TALKIE PUSH-TO-TALK BUTTON (PRESS & HOLD FOR 15s) -->
-            <button id="pttCircleBtn" 
-                class="w-12 h-12 rounded-full bg-red-950 text-red-400 border-2 border-red-700 flex flex-col items-center justify-center shrink-0 active:bg-green-600 active:border-green-300 active:text-white transition touch-none shadow-lg">
-                <i class="fa-solid fa-microphone-slash text-sm" id="pttIcon"></i>
-                <span id="pttTimerLabel" class="text-[8px] font-bold mt-0.5">HOLD</span>
-            </button>
-
-            <!-- GIFTING SYSTEM SELECTOR -->
-            <button onclick="toggleGiftMenu()" class="bg-pink-950/60 border border-pink-700/50 text-pink-400 px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Send Gift
-            </button>
-
-            <!-- LOCAL PHONE MP3 MUSIC -->
-            <label class="bg-gray-800 border border-gray-700 text-sky-400 px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer truncate">
-                <i class="fa-solid fa-music"></i> Song
-                <input type="file" id="songInput" accept="audio/*" class="hidden" onchange="playLocalAudioFile(this)">
-            </label>
-        </div>
-
-        <!-- GIFT POPUP SELECTION PANEL -->
-        <div id="giftPanel" class="hidden bg-gray-900 border border-pink-500/40 p-3 rounded-2xl mb-2 grid grid-cols-4 gap-2 shrink-0">
-            <button onclick="sendGift('💃 Dance', '💃')" class="bg-gray-800 p-2 rounded-xl text-center hover:bg-pink-900/40 border border-gray-700">
-                <span class="text-xl block">💃</span>
-                <span class="text-[9px] text-gray-300 block font-bold">Dance</span>
-            </button>
-            <button onclick="sendGift('❄️ Freeze Effect', '❄️')" class="bg-gray-800 p-2 rounded-xl text-center hover:bg-sky-900/40 border border-gray-700">
-                <span class="text-xl block">❄️</span>
-                <span class="text-[9px] text-gray-300 block font-bold">Freeze</span>
-            </button>
-            <button onclick="sendGift('🚀 Rocket', '🚀')" class="bg-gray-800 p-2 rounded-xl text-center hover:bg-amber-900/40 border border-gray-700">
-                <span class="text-xl block">🚀</span>
-                <span class="text-[9px] text-gray-300 block font-bold">Rocket</span>
-            </button>
-            <button onclick="sendGift('👑 Crown VIP', '👑')" class="bg-gray-800 p-2 rounded-xl text-center hover:bg-yellow-900/40 border border-gray-700">
-                <span class="text-xl block">👑</span>
-                <span class="text-[9px] text-gray-300 block font-bold">Crown</span>
-            </button>
-        </div>
-
-        <!-- CHAT LOG -->
-        <div id="chatLog" class="flex-1 overflow-y-auto space-y-2 text-xs bg-gray-900/60 p-3 rounded-2xl border border-gray-800 my-1"></div>
-
-        <!-- CHAT INPUT -->
-        <div class="flex items-center gap-2 pt-1 shrink-0">
-            <input type="text" id="messageInput" placeholder="Message likhein..." class="flex-1 bg-gray-800 border border-gray-700 rounded-full px-4 py-2 text-xs text-white focus:outline-none">
-            <button onclick="sendChatMessage()" class="bg-amber-500 w-9 h-9 rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-paper-plane text-xs"></i></button>
-        </div>
-    </div>
-
-    <!-- HOST APPROVAL PENDING MODAL -->
-    <div id="hostApprovalModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-        <div class="bg-gray-900 border border-amber-500/50 p-5 rounded-2xl max-w-xs w-full text-center">
-            <i class="fa-solid fa-user-clock text-amber-400 text-3xl mb-2"></i>
-            <h3 class="text-sm font-bold text-white">Host Permission Required</h3>
-            <p class="text-xs text-gray-300 mt-1" id="requestStatusText">Aapki seat request Host ko bhej di gayi hai. Host ke approve karne par aap seat par judenge.</p>
-            <button onclick="closeHostModal()" class="mt-4 bg-gray-800 text-gray-300 px-4 py-2 rounded-xl text-xs font-bold">OK</button>
+            <!-- ROOMS & FORCE SEAT CONTROL -->
+            <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-microphone-lines"></i> Active Rooms & Force Seats</h3>
+                <div id="adminRoomsContainer" class="space-y-3 max-h-80 overflow-y-auto"></div>
+            </div>
         </div>
     </div>
 
     <script>
         const socket = io();
-        let myName = localStorage.getItem('cc_user') || "";
-        let myContact = localStorage.getItem('cc_contact') || "";
-        let currentRoomId = null;
-        let isCurrentHost = false;
 
-        // Agora Real-Time Voice Engine
-        const AGORA_APP_ID = "YOUR_AGORA_APP_ID";
-        let agoraClient = null;
-        let localAudioTrack = null;
-        let pttCountdown = 15;
-        let pttInterval = null;
-
-        window.onload = () => {
-            if (myName && myContact) {
-                document.getElementById('usernameInput').value = myName;
-                document.getElementById('userContactInput').value = myContact;
-                loginUser();
-            }
-            initAgoraEngine();
-            setupPushToTalkEvents();
-        };
-
-        async function initAgoraEngine() {
-            agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-            agoraClient.on("user-published", async (user, mediaType) => {
-                await agoraClient.subscribe(user, mediaType);
-                if (mediaType === "audio") user.audioTrack.play();
-            });
+        function verifyAdminKey() {
+            const secretKey = document.getElementById('secretKeyInput').value.trim();
+            socket.emit('admin_login', { secretKey });
         }
 
-        function loginUser() {
-            const name = document.getElementById('usernameInput').value.trim();
-            const contact = document.getElementById('userContactInput').value.trim();
+        socket.on('admin_auth_success', (data) => {
+            document.getElementById('adminLoginModal').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            renderAdminData(data);
+        });
 
-            if (!name || !contact) return alert("Kripya Naam aur Mobile/Gmail bharein!");
+        socket.on('admin_auth_failed', (errText) => {
+            document.getElementById('errorMsg').innerText = errText;
+        });
 
-            myName = name;
-            myContact = contact;
-            localStorage.setItem('cc_user', myName);
-            localStorage.setItem('cc_contact', myContact);
+        socket.on('admin_refresh_data', (data) => {
+            renderAdminData(data);
+        });
 
-            document.getElementById('displayUsername').innerText = myName;
-            document.getElementById('displayContact').innerText = myContact;
-            document.getElementById('userAvatar').innerText = myName.charAt(0).toUpperCase();
-
-            document.getElementById('profileName').innerText = myName;
-            document.getElementById('profileContact').innerText = myContact;
-            document.getElementById('profileAvatarBig').innerText = myName.charAt(0).toUpperCase();
-
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-
-            socket.emit('login_user', { name: myName, contact: myContact });
-        }
-
-        function logoutUser() {
-            localStorage.clear();
-            location.reload();
-        }
-
-        function showNotifications() { alert("Koi naya notification nahi hai!"); }
-
-        function switchTab(tabName) {
-            ['home', 'inbox', 'gifts', 'profile'].forEach(t => {
-                document.getElementById(t + 'Tab').classList.add('hidden');
-                document.getElementById('nav' + t.charAt(0).toUpperCase() + t.slice(1)).className = "flex flex-col items-center text-gray-400";
-            });
-            document.getElementById(tabName + 'Tab').classList.remove('hidden');
-            document.getElementById('nav' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).className = "flex flex-col items-center text-amber-500 font-bold";
-        }
-
-        function createNewGroupRoom() {
-            let roomName = prompt("Apne naye 9-Seat Group Room ka naam likhein:");
-            if (roomName) socket.emit('create_room', { roomName, hostName: myName, hostContact: myContact });
-        }
-
-        socket.on('update_room_list', (rooms) => {
-            const container = document.getElementById('roomsListContainer');
-            container.innerHTML = '';
-            if (rooms.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-6">Koi active room nahi hai. 'Create' par click karke room banayein!</p>`;
-                return;
-            }
-            rooms.forEach(room => {
-                container.innerHTML += `
-                    <div class="bg-gray-800/60 p-3.5 rounded-2xl border border-gray-700 flex justify-between items-center shadow">
-                        <div>
-                            <h3 class="font-bold text-sm text-amber-400"><i class="fa-solid fa-crown text-xs"></i> ${room.roomName}</h3>
-                            <p class="text-[11px] text-gray-400">Host: ${room.hostName} (${room.hostContact})</p>
+        function renderAdminData(data) {
+            // Render Users
+            const userContainer = document.getElementById('usersListContainer');
+            userContainer.innerHTML = '';
+            if (data.users.length === 0) {
+                userContainer.innerHTML = `<p class="text-xs text-gray-500">Koi user online nahi hai.</p>`;
+            } else {
+                data.users.forEach(u => {
+                    userContainer.innerHTML += `
+                        <div class="bg-gray-800/60 p-3 rounded-xl border border-gray-700 flex justify-between items-center text-xs">
+                            <div>
+                                <p class="font-bold text-white">${u.name} <span class="text-[10px] text-sky-400">(${u.contact})</span></p>
+                                <p class="text-[9px] text-gray-400">Status: ${u.banned ? '<span class="text-red-400 font-bold">BANNED</span>' : '<span class="text-green-400">Active</span>'}</p>
+                            </div>
+                            <button onclick="toggleUserBan('${u.id}')" class="${u.banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'} px-3 py-1 rounded-lg font-bold text-[10px]">
+                                ${u.banned ? 'Unban' : 'Ban'}
+                            </button>
                         </div>
-                        <button onclick="joinRoom('${room.id}')" class="bg-amber-500 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow">Join Room</button>
-                    </div>
-                `;
-            });
-        });
-
-        async function joinRoom(roomId) {
-            currentRoomId = roomId;
-            socket.emit('join_room', { roomId, name: myName });
-            document.getElementById('viewVoiceRoom').classList.remove('hidden');
-            try { await agoraClient.join(AGORA_APP_ID || "test", roomId, null, socket.id); } catch (e) {}
-        }
-
-        async function closeVoiceRoom() {
-            stopMic();
-            if (currentRoomId) {
-                socket.emit('leave_room', { roomId: currentRoomId });
-                await agoraClient.leave();
-                currentRoomId = null;
+                    `;
+                });
             }
-            document.getElementById('viewVoiceRoom').classList.add('hidden');
-        }
 
-        // SEAT CLICK LOGIC (HOST ADMIN CONTROLLED)
-        function clickSeat(seatIndex) {
-            socket.emit('seat_click_request', { roomId: currentRoomId, seatIndex, userName: myName, socketId: socket.id });
-        }
+            // Render Rooms & Seats
+            const roomContainer = document.getElementById('adminRoomsContainer');
+            roomContainer.innerHTML = '';
+            if (data.rooms.length === 0) {
+                roomContainer.innerHTML = `<p class="text-xs text-gray-500">Koi active room nahi hai.</p>`;
+            } else {
+                data.rooms.forEach(room => {
+                    let seatsHtml = '';
+                    room.seats.forEach((seat, idx) => {
+                        let occupied = !!seat;
+                        seatsHtml += `
+                            <div class="bg-gray-800 p-1.5 rounded text-center text-[10px] border border-gray-700">
+                                <span class="block text-amber-400 font-bold">S${idx+1}</span>
+                                <span class="truncate block text-gray-300">${occupied ? seat.name : 'Empty'}</span>
+                                ${occupied ? `<button onclick="forceRemoveSeat('${room.id}',${idx})" class="mt-1 bg-red-900 text-red-200 px-1 py-0.5 rounded text-[8px] font-bold">Kick</button>` : ''}
+                            </div>
+                        `;
+                    });
 
-        socket.on('seat_request_pending_host', (data) => {
-            if (isCurrentHost) {
-                if (confirm(`${data.userName} seat par baithna chahta hai. Kya aap permission dete hain?`)) {
-                    socket.emit('approve_seat_request', { roomId: currentRoomId, seatIndex: data.seatIndex, targetSocketId: data.socketId, userName: data.userName });
-                }
-            } else if (data.socketId === socket.id) {
-                document.getElementById('hostApprovalModal').classList.remove('hidden');
-            }
-        });
-
-        function closeHostModal() { document.getElementById('hostApprovalModal').classList.add('hidden'); }
-
-        socket.on('update_room_state', (room) => {
-            document.getElementById('activeRoomTitle').innerText = `👑 ${room.roomName}`;
-            isCurrentHost = (room.hostSocketId === socket.id);
-            renderSeats(room.seats);
-        });
-
-        function renderSeats(seats) {
-            const grid = document.getElementById('seatsGrid');
-            grid.innerHTML = '';
-            seats.forEach((seat, index) => {
-                let isTaken = !!seat;
-                grid.innerHTML += `
-                    <div class="flex flex-col items-center" onclick="clickSeat(${index})">
-                        <div class="w-13 h-13 rounded-full ${isTaken ? 'bg-amber-950 border-2 border-amber-500' : 'bg-gray-800 border border-gray-700'} flex items-center justify-center shadow cursor-pointer">
-                            <i class="fa-solid ${isTaken ? 'fa-microphone text-amber-400 animate-pulse' : 'fa-lock text-gray-600'} text-xs"></i>
+                    roomContainer.innerHTML += `
+                        <div class="bg-gray-800/60 p-3 rounded-xl border border-gray-700 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-bold text-amber-400">👑 ${room.roomName}</span>
+                                <span class="text-[9px] text-gray-400">Host: ${room.hostName}</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-1.5">${seatsHtml}</div>
                         </div>
-                        <span class="text-[10px] mt-1 text-gray-300 truncate w-14 text-center">${isTaken ? seat.name : 'Seat ' + (index+1)}</span>
-                    </div>
-                `;
-            });
-        }
-
-        // 15-SECOND CIRCULAR PUSH-TO-TALK MIC
-        function setupPushToTalkEvents() {
-            const btn = document.getElementById('pttCircleBtn');
-
-            const startSpeaking = async (e) => {
-                if (e) e.preventDefault();
-                if (localAudioTrack || !currentRoomId) return;
-
-                try {
-                    localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-                    await agoraClient.publish([localAudioTrack]);
-
-                    btn.className = "w-12 h-12 rounded-full bg-green-600 border-2 border-green-300 text-white flex flex-col items-center justify-center shrink-0 shadow-lg transition";
-                    document.getElementById('pttIcon').className = "fa-solid fa-microphone animate-bounce text-sm";
-                    
-                    pttCountdown = 15;
-                    document.getElementById('pttTimerLabel').innerText = `${pttCountdown}s`;
-
-                    pttInterval = setInterval(() => {
-                        pttCountdown--;
-                        if (pttCountdown > 0) {
-                            document.getElementById('pttTimerLabel').innerText = `${pttCountdown}s`;
-                        } else {
-                            stopMic();
-                        }
-                    }, 1000);
-                } catch (err) {
-                    alert("Mic Access allow karein!");
-                }
-            };
-
-            const stopSpeaking = (e) => {
-                if (e) e.preventDefault();
-                stopMic();
-            };
-
-            btn.addEventListener('mousedown', startSpeaking);
-            btn.addEventListener('mouseup', stopSpeaking);
-            btn.addEventListener('touchstart', startSpeaking);
-            btn.addEventListener('touchend', stopSpeaking);
-        }
-
-        async function stopMic() {
-            if (pttInterval) clearInterval(pttInterval);
-            if (localAudioTrack) {
-                localAudioTrack.stop();
-                localAudioTrack.close();
-                await agoraClient.unpublish([localAudioTrack]);
-                localAudioTrack = null;
-            }
-
-            const btn = document.getElementById('pttCircleBtn');
-            btn.className = "w-12 h-12 rounded-full bg-red-950 text-red-400 border-2 border-red-700 flex flex-col items-center justify-center shrink-0 touch-none shadow-lg";
-            document.getElementById('pttIcon').className = "fa-solid fa-microphone-slash text-sm";
-            document.getElementById('pttTimerLabel').innerText = "HOLD";
-        }
-
-        // GIFTS SYSTEM
-        function toggleGiftMenu() {
-            document.getElementById('giftPanel').classList.toggle('hidden');
-        }
-
-        function sendGift(giftName, emoji) {
-            if (currentRoomId) {
-                socket.emit('send_gift', { roomId: currentRoomId, giftName, emoji, sender: myName });
-                toggleGiftMenu();
+                    `;
+                });
             }
         }
 
-        socket.on('receive_gift_anim', (data) => {
-            const area = document.getElementById('giftEffectArea');
-            const elem = document.createElement('div');
-            elem.className = "absolute left-1/2 -translate-x-1/2 text-5xl gift-anim font-black text-amber-400 drop-shadow-lg";
-            elem.innerText = `${data.emoji} ${data.giftName}`;
-            area.appendChild(elem);
-            setTimeout(() => elem.remove(), 2500);
-
-            const chatLog = document.getElementById('chatLog');
-            chatLog.innerHTML += `<div class="bg-pink-950/40 border border-pink-800/50 p-2 rounded text-pink-300 font-bold">🎁 ${data.sender} ne bheja: ${data.giftName} ${data.emoji}</div>`;
-            chatLog.scrollTop = chatLog.scrollHeight;
-        });
-
-        // CALLING SYSTEM
-        function startDirectCall(type) {
-            alert(`${type} Call Shuru Ho Rahi Hai... Target Member Ko Dial Kiya Ja Raha Hai.`);
+        function toggleUserBan(targetSocketId) {
+            socket.emit('admin_toggle_ban', { targetSocketId });
         }
 
-        // LOCAL MUSIC
-        function playLocalAudioFile(input) {
-            const file = input.files[0];
-            if (file) alert(`Playing Local Song: ${file.name}`);
+        function forceRemoveSeat(roomId, seatIndex) {
+            socket.emit('admin_force_seat', { roomId, seatIndex, targetSocketId: null, targetName: null });
         }
 
-        function sendChatMessage() {
-            const input = document.getElementById('messageInput');
-            if (input.value.trim() && currentRoomId) {
-                socket.emit('send_msg', { roomId: currentRoomId, text: input.value, sender: myName });
-                input.value = '';
+        function sendGlobalAnnouncement() {
+            const message = document.getElementById('globalMsgInput').value.trim();
+            if (message) {
+                socket.emit('admin_global_announcement', { message });
+                document.getElementById('globalMsgInput').value = '';
+                alert("Global Flash Announcement bhej di gayi hai!");
             }
         }
-
-        socket.on('receive_msg', (data) => {
-            const chatLog = document.getElementById('chatLog');
-            chatLog.innerHTML += `<div class="bg-gray-800/40 p-2 rounded"><span class="font-bold text-sky-400">${data.sender}:</span> ${data.text}</div>`;
-            chatLog.scrollTop = chatLog.scrollHeight;
-        });
     </script>
 </body>
 </html>
