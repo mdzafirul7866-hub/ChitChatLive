@@ -1,122 +1,102 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-    cors: { origin: "*" }
-});
+const io = new Server(server, { cors: { origin: "*" } });
 
-app.use(express.json());
 app.use(express.static('public'));
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/chitchat';
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('✅ DB Connected'))
-  .catch(err => console.log('⚠️ DB Connection Warning:', err.message));
-
-let activeRooms = {}; 
+let activeRooms = {};
 
 io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.id}`);
 
-    socket.on('user_login', (userData) => {
+    socket.on('login_user', (userData) => {
         socket.data.user = userData;
-        socket.emit('room_list_update', Object.values(activeRooms));
+        socket.emit('update_room_list', Object.values(activeRooms));
     });
 
-    socket.on('create_room', ({ roomName, hostName }) => {
+    socket.on('create_room', ({ roomName, hostName, hostContact }) => {
         const roomId = 'room_' + Date.now();
-        const newRoom = {
+        activeRooms[roomId] = {
             id: roomId,
             roomName: roomName,
             hostName: hostName,
+            hostContact: hostContact,
             hostSocketId: socket.id,
-            membersCount: 0,
             seats: Array(9).fill(null)
         };
-        activeRooms[roomId] = newRoom;
-        io.emit('room_list_update', Object.values(activeRooms));
+        // Host gets Seat 1 automatically
+        activeRooms[roomId].seats[0] = { id: socket.id, name: hostName };
+
+        io.emit('update_room_list', Object.values(activeRooms));
     });
 
-    socket.on('join_specific_room', ({ roomId, name }) => {
+    socket.on('join_room', ({ roomId }) => {
         socket.join(roomId);
-        socket.data.currentRoom = roomId;
-
+        socket.data.roomId = roomId;
         if (activeRooms[roomId]) {
-            activeRooms[roomId].membersCount = (activeRooms[roomId].membersCount || 0) + 1;
-            
-            // Send existing room users list for WebRTC mesh connection
-            const roomClients = Array.from(io.sockets.adapter.rooms.get(roomId) || []);
-            socket.emit('room_users_list', roomClients);
-
-            io.to(roomId).emit('room_state_update', activeRooms[roomId]);
-            io.emit('room_list_update', Object.values(activeRooms));
+            io.to(roomId).emit('update_room_state', activeRooms[roomId]);
         }
     });
 
     socket.on('leave_room', ({ roomId }) => {
         socket.leave(roomId);
         if (activeRooms[roomId]) {
-            activeRooms[roomId].membersCount = Math.max(0, (activeRooms[roomId].membersCount || 1) - 1);
             activeRooms[roomId].seats = activeRooms[roomId].seats.map(s => s?.id === socket.id ? null : s);
-
-            io.to(roomId).emit('room_state_update', activeRooms[roomId]);
-            io.emit('room_list_update', Object.values(activeRooms));
+            io.to(roomId).emit('update_room_state', activeRooms[roomId]);
         }
-        socket.data.currentRoom = null;
+        socket.data.roomId = null;
     });
 
-    socket.on('toggle_seat', ({ roomId, seatIndex }) => {
+    // ADMIN CONTROLLED SEATING LOGIC
+    socket.on('seat_click_request', ({ roomId, seatIndex, userName, socketId }) => {
         const room = activeRooms[roomId];
         if (!room) return;
 
-        const userName = socket.data.user?.name || 'User';
-
-        if (room.seats[seatIndex]?.id === socket.id) {
+        // If clicking own occupied seat, unseat
+        if (room.seats[seatIndex]?.id === socketId) {
             room.seats[seatIndex] = null;
-        } else if (!room.seats[seatIndex]) {
-            room.seats = room.seats.map(s => s?.id === socket.id ? null : s);
-            room.seats[seatIndex] = { id: socket.id, name: userName };
+            io.to(roomId).emit('update_room_state', room);
+            return;
         }
 
-        io.to(roomId).emit('room_state_update', room);
+        // If Host clicks or Host is self, sit directly
+        if (room.hostSocketId === socketId) {
+            room.seats[seatIndex] = { id: socketId, name: userName };
+            io.to(roomId).emit('update_room_state', room);
+        } else {
+            // Send permission request to Host
+            io.to(room.hostSocketId).emit('seat_request_pending_host', { seatIndex, userName, socketId });
+            socket.emit('seat_request_pending_host', { seatIndex, userName, socketId });
+        }
     });
 
-    socket.on('send_room_message', ({ roomId, text }) => {
-        const userName = socket.data.user?.name || 'Guest';
-        io.to(roomId).emit('room_chat_message', { sender: userName, text: text });
+    socket.on('approve_seat_request', ({ roomId, seatIndex, targetSocketId, userName }) => {
+        const room = activeRooms[roomId];
+        if (!room) return;
+
+        room.seats[seatIndex] = { id: targetSocketId, name: userName };
+        io.to(roomId).emit('update_room_state', room);
     });
 
-    socket.on('start_audio_stream', (data) => {
-        socket.to(data.roomId).emit('user_joined_audio', data);
+    socket.on('send_gift', ({ roomId, giftName, emoji, sender }) => {
+        io.to(roomId).emit('receive_gift_anim', { giftName, emoji, sender });
     });
 
-    socket.on('webrtc_offer', (data) => {
-        io.to(data.targetId).emit('webrtc_offer', data);
-    });
-
-    socket.on('webrtc_answer', (data) => {
-        io.to(data.targetId).emit('webrtc_answer', data);
-    });
-
-    socket.on('webrtc_ice_candidate', (data) => {
-        io.to(data.targetId).emit('webrtc_ice_candidate', data);
+    socket.on('send_msg', ({ roomId, text, sender }) => {
+        io.to(roomId).emit('receive_msg', { sender, text });
     });
 
     socket.on('disconnect', () => {
-        const roomId = socket.data.currentRoom;
+        const roomId = socket.data.roomId;
         if (roomId && activeRooms[roomId]) {
-            activeRooms[roomId].membersCount = Math.max(0, (activeRooms[roomId].membersCount || 1) - 1);
             activeRooms[roomId].seats = activeRooms[roomId].seats.map(s => s?.id === socket.id ? null : s);
-            io.to(roomId).emit('room_state_update', activeRooms[roomId]);
-            io.emit('room_list_update', Object.values(activeRooms));
+            io.to(roomId).emit('update_room_state', activeRooms[roomId]);
         }
-        console.log(`User disconnected: ${socket.id}`);
     });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 ChitChat Server running on port ${PORT}`));
