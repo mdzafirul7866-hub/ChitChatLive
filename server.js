@@ -7,16 +7,65 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(express.static('public'));
+app.use(express.json());
 
-let activeRooms = {};
+// Secret Owner Password Key
+const ADMIN_SECRET_KEY = "manoवर_owner_2026";
+
+let activeRooms = {}; 
+let registeredUsers = {}; // { socketId: { name, contact, banned: false } }
 
 io.on('connection', (socket) => {
 
     socket.on('login_user', (userData) => {
+        if (registeredUsers[socket.id]?.banned) {
+            socket.emit('user_banned_alert', "Aapka account Admin dwara ban kar diya gaya hai!");
+            return;
+        }
+        registeredUsers[socket.id] = { id: socket.id, name: userData.name, contact: userData.contact, banned: false };
         socket.data.user = userData;
         socket.emit('update_room_list', Object.values(activeRooms));
     });
 
+    // --- ADMIN PANEL AUTH & ACTIONS ---
+    socket.on('admin_login', ({ secretKey }) => {
+        if (secretKey === ADMIN_SECRET_KEY) {
+            socket.emit('admin_auth_success', {
+                users: Object.values(registeredUsers),
+                rooms: Object.values(activeRooms)
+            });
+        } else {
+            socket.emit('admin_auth_failed', "Galat Secret Key! Access Denied.");
+        }
+    });
+
+    socket.on('admin_toggle_ban', ({ targetSocketId }) => {
+        if (registeredUsers[targetSocketId]) {
+            registeredUsers[targetSocketId].banned = !registeredUsers[targetSocketId].banned;
+            io.to(targetSocketId).emit('user_banned_alert', "Aapko Admin ne ban/unban kiya hai.");
+            io.emit('admin_refresh_data', { users: Object.values(registeredUsers), rooms: Object.values(activeRooms) });
+        }
+    });
+
+    socket.on('admin_force_seat', ({ roomId, seatIndex, targetSocketId, targetName }) => {
+        const room = activeRooms[roomId];
+        if (!room) return;
+
+        if (targetSocketId === null) {
+            room.seats[seatIndex] = null; // Clear seat
+        } else {
+            room.seats = room.seats.map(s => s?.id === targetSocketId ? null : s);
+            room.seats[seatIndex] = { id: targetSocketId, name: targetName };
+        }
+        io.to(roomId).emit('update_room_state', room);
+        io.emit('admin_refresh_data', { users: Object.values(registeredUsers), rooms: Object.values(activeRooms) });
+    });
+
+    socket.on('admin_global_announcement', ({ message }) => {
+        io.emit('global_flash_announcement', message);
+    });
+
+    // --- ROOMS & SEATING ---
     socket.on('create_room', ({ roomName, hostName, hostContact }) => {
         const roomId = 'room_' + Date.now();
         activeRooms[roomId] = {
@@ -27,9 +76,7 @@ io.on('connection', (socket) => {
             hostSocketId: socket.id,
             seats: Array(9).fill(null)
         };
-        // Host gets Seat 1 automatically
         activeRooms[roomId].seats[0] = { id: socket.id, name: hostName };
-
         io.emit('update_room_list', Object.values(activeRooms));
     });
 
@@ -50,46 +97,8 @@ io.on('connection', (socket) => {
         socket.data.roomId = null;
     });
 
-    // ADMIN CONTROLLED SEATING LOGIC
-    socket.on('seat_click_request', ({ roomId, seatIndex, userName, socketId }) => {
-        const room = activeRooms[roomId];
-        if (!room) return;
-
-        // If clicking own occupied seat, unseat
-        if (room.seats[seatIndex]?.id === socketId) {
-            room.seats[seatIndex] = null;
-            io.to(roomId).emit('update_room_state', room);
-            return;
-        }
-
-        // If Host clicks or Host is self, sit directly
-        if (room.hostSocketId === socketId) {
-            room.seats[seatIndex] = { id: socketId, name: userName };
-            io.to(roomId).emit('update_room_state', room);
-        } else {
-            // Send permission request to Host
-            io.to(room.hostSocketId).emit('seat_request_pending_host', { seatIndex, userName, socketId });
-            socket.emit('seat_request_pending_host', { seatIndex, userName, socketId });
-        }
-    });
-
-    socket.on('approve_seat_request', ({ roomId, seatIndex, targetSocketId, userName }) => {
-        const room = activeRooms[roomId];
-        if (!room) return;
-
-        room.seats[seatIndex] = { id: targetSocketId, name: userName };
-        io.to(roomId).emit('update_room_state', room);
-    });
-
-    socket.on('send_gift', ({ roomId, giftName, emoji, sender }) => {
-        io.to(roomId).emit('receive_gift_anim', { giftName, emoji, sender });
-    });
-
-    socket.on('send_msg', ({ roomId, text, sender }) => {
-        io.to(roomId).emit('receive_msg', { sender, text });
-    });
-
     socket.on('disconnect', () => {
+        delete registeredUsers[socket.id];
         const roomId = socket.data.roomId;
         if (roomId && activeRooms[roomId]) {
             activeRooms[roomId].seats = activeRooms[roomId].seats.map(s => s?.id === socket.id ? null : s);
@@ -99,4 +108,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 ChitChat Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Admin Panel Server running on port ${PORT}`));
