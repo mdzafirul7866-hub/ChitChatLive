@@ -3,72 +3,290 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChitChat - Admin Panel Dashboard</title>
+    <title>ChitChat - 9-Seat Voice Club</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="/socket.io/socket.io.js"></script>
+    <style>
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.8); }
+            70% { transform: scale(1.08); box-shadow: 0 0 0 14px rgba(236, 72, 153, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
+        }
+        .speaking { animation: pulse-ring 1.2s infinite; border: 3px solid #ec4899; }
+        .avatar-border-vip { border: 3px solid #f59e0b; box-shadow: 0 0 10px #f59e0b; }
+    </style>
 </head>
-<body class="bg-gray-950 text-white font-sans p-6">
-    <div class="max-w-4xl mx-auto space-y-6">
-        <div class="flex justify-between items-center bg-gray-900 p-4 rounded-2xl border border-gray-800">
-            <h1 class="text-xl font-bold text-yellow-400 flex items-center gap-2"><i class="fa-solid fa-shield-halved"></i> ChitChat Super Admin Control Panel</h1>
-            <button onclick="fetchAdminData()" class="bg-blue-600 px-4 py-2 rounded-xl text-xs font-bold">रिफ्रेश डेटा</button>
+<body class="bg-gray-950 text-white font-sans antialiased flex justify-center items-center h-screen overflow-hidden">
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginScreen" class="fixed inset-0 bg-gray-950 z-50 flex flex-col justify-between p-6 max-w-md mx-auto">
+        <div class="text-center mt-12">
+            <div class="inline-block p-4 bg-gradient-to-tr from-pink-600 to-purple-600 rounded-3xl mb-4 shadow-xl shadow-pink-600/40">
+                <i class="fa-solid fa-microphone-lines text-4xl text-white"></i>
+            </div>
+            <h1 class="text-3xl font-extrabold tracking-wider text-pink-500">ChitChat</h1>
+            <p class="text-gray-400 text-sm mt-1">9-Seat Voice Club & Social App</p>
+        </div>
+        <div class="space-y-4 w-full">
+            <input type="text" id="usernameInput" placeholder="अपना नाम या यूज़र आईडी दर्ज करें..." class="w-full py-3.5 px-4 bg-gray-900 border border-gray-700 rounded-2xl text-sm focus:outline-none focus:border-pink-500 text-white">
+            <button onclick="loginUser()" class="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl font-bold shadow-lg shadow-pink-600/30">ऐप में प्रवेश करें 🚀</button>
+        </div>
+        <p class="text-center text-xs text-gray-500">Push-to-Talk & WebRTC Enabled</p>
+    </div>
+
+    <!-- MAIN APP WRAPPER -->
+    <div id="mainApp" class="hidden flex flex-col h-full w-full max-w-md bg-gray-900 shadow-2xl relative">
+        
+        <!-- HEADER -->
+        <div id="topHeader" class="flex items-center justify-between p-4 bg-gray-900/90 border-b border-gray-800">
+            <div class="flex gap-4 text-sm font-bold text-gray-400">
+                <button onclick="switchHomeTab('chatrooms')" id="tabChatrooms" class="text-pink-500 border-b-2 border-pink-500 pb-1">Chatrooms</button>
+                <button onclick="switchHomeTab('messages')" id="tabMessages" class="hover:text-white">Messages</button>
+            </div>
+            <button onclick="openWalletModal()" class="bg-gray-800 px-3 py-1 rounded-full text-xs font-bold text-yellow-400 flex items-center gap-1 border border-yellow-600/30">
+                <i class="fa-solid fa-coins"></i> <span id="coinBalance">1000</span>
+            </button>
         </div>
 
-        <!-- Live Metrics -->
-        <div class="grid grid-cols-3 gap-4">
-            <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800"><p class="text-xs text-gray-400">एक्टिव लाइव रूम्स</p><h2 id="totalRooms" class="text-2xl font-bold text-pink-500">1</h2></div>
-            <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800"><p class="text-xs text-gray-400">कुल लाइव यूज़र्स</p><h2 id="totalUsers" class="text-2xl font-bold text-yellow-400">0</h2></div>
-            <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800"><p class="text-xs text-gray-400">सिस्टम स्टेटस</p><h2 class="text-2xl font-bold text-green-400">ऑनलाइन 🟢</h2></div>
+        <!-- CONTENT VIEWS -->
+        <div class="flex-1 overflow-y-auto relative pb-20">
+
+            <!-- HOME VIEW -->
+            <div id="viewHome" class="p-4 space-y-4">
+                <div id="subTabChatrooms" class="space-y-3">
+                    <div class="flex justify-between items-center bg-gray-800/60 p-3 rounded-2xl border border-gray-700/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center font-bold text-lg">🎙️</div>
+                            <div>
+                                <h3 class="font-bold text-sm">आवाज 🌸 सुनने ❤️ को</h3>
+                                <p class="text-xs text-gray-400">9-Seat Voice Club</p>
+                            </div>
+                        </div>
+                        <button onclick="openVoiceRoom()" class="bg-pink-600 hover:bg-pink-500 px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-pink-600/30">जॉइन करें</button>
+                    </div>
+                </div>
+
+                <!-- MESSAGES SUBTAB -->
+                <div id="subTabMessages" class="hidden space-y-2">
+                    <div class="flex items-center justify-between bg-gray-800/40 p-3 rounded-2xl border border-gray-800">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold">R</div>
+                            <div>
+                                <h4 class="text-sm font-bold">Rahul Verma</h4>
+                                <p class="text-xs text-gray-400">नमस्ते भाई!</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="checkAndStartCall('audio', 'Rahul Verma')" class="p-2 bg-green-600/30 text-green-400 rounded-full"><i class="fa-solid fa-phone text-xs"></i></button>
+                            <button onclick="checkAndStartCall('video', 'Rahul Verma')" class="p-2 bg-purple-600/30 text-purple-400 rounded-full"><i class="fa-solid fa-video text-xs"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PROFILE VIEW (WITH BACK DP EDIT) -->
+            <div id="viewProfile" class="hidden p-4 space-y-4">
+                <div class="relative bg-gray-800/60 rounded-3xl overflow-hidden border border-gray-800 pb-4">
+                    <!-- Background DP -->
+                    <div id="profileBgDp" class="h-28 bg-cover bg-center" style="background-image: url('https://via.placeholder.com/400x150');"></div>
+                    <div class="flex items-center gap-4 px-4 -mt-8">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-pink-600 to-purple-600 border-4 border-gray-900 flex items-center justify-center text-2xl font-bold avatar-border-vip" id="profileInitial">U</div>
+                        <div class="mt-6">
+                            <h3 id="profileNameDisplay" class="font-bold text-base">User</h3>
+                            <p class="text-xs text-pink-400">UID: #741829 | VIP 👑</p>
+                        </div>
+                    </div>
+                    <div class="px-4 mt-3">
+                        <button onclick="editProfileDp()" class="w-full py-2 bg-gray-800 border border-gray-700 rounded-xl text-xs text-gray-300 font-bold">✏️ Edit Profile & Back DP</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 9-SEAT VOICE CLUB ROOM OVERLAY -->
+            <div id="viewVoiceRoom" class="hidden absolute inset-0 bg-gray-900 z-30 flex flex-col p-4">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <button onclick="closeVoiceRoom()" class="text-gray-400"><i class="fa-solid fa-arrow-left"></i></button>
+                        <h2 class="text-sm font-bold truncate">आवाज 🌸 सुनने ❤️ को</h2>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="playRoomMusic()" class="bg-blue-600 px-3 py-1 rounded-xl text-xs font-bold"><i class="fa-solid fa-music"></i> म्यूजिक</button>
+                        <button onclick="closeVoiceRoom()" class="bg-red-600/40 text-red-300 px-3 py-1 rounded-xl text-xs font-bold">एग्जिट</button>
+                    </div>
+                </div>
+
+                <!-- Entrance Animation Notification -->
+                <div id="entranceBanner" class="hidden bg-pink-900/60 border border-pink-500/40 p-2 rounded-xl text-xs text-pink-300 text-center my-2"></div>
+
+                <!-- 9 Seats Grid -->
+                <div id="seatsGrid" class="grid grid-cols-3 gap-4 py-3"></div>
+
+                <!-- Announcement -->
+                <div class="bg-gray-800/60 p-2.5 rounded-xl text-xs border border-gray-700/50">
+                    <p class="font-bold text-pink-400">📢 घोषणा:</p>
+                    <p id="announcementText" class="text-gray-300">लोड हो रहा है...</p>
+                </div>
+
+                <!-- Chat Log -->
+                <div id="chatLog" class="flex-1 overflow-y-auto space-y-2 text-xs my-2 bg-gray-950/40 p-2 rounded-xl"></div>
+
+                <!-- PTT (PUSH-TO-TALK) MIC & FOOTER CONTROLS -->
+                <div class="flex items-center gap-2 pt-2 border-t border-gray-800">
+                    <input type="text" id="messageInput" placeholder="संदेश भेजें..." class="flex-1 bg-gray-800 border border-gray-700 rounded-full px-4 py-2 text-xs focus:outline-none focus:border-pink-500 text-white">
+                    <button onclick="sendMessage()" class="bg-pink-600 w-9 h-9 rounded-full flex items-center justify-center"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+                    
+                    <!-- PTT Touch-and-Hold Mic Button -->
+                    <button id="pttButton" class="bg-purple-600 hover:bg-purple-500 w-11 h-11 rounded-full flex items-center justify-center font-bold text-xs select-none touch-none shadow-lg shadow-purple-600/40">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+
+                    <button onclick="sendGift('Special Gift', 103, 150)" class="bg-yellow-600 w-9 h-9 rounded-full flex items-center justify-center"><i class="fa-solid fa-gift text-xs"></i></button>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Active Rooms & 9-Seat Controls -->
-        <div class="bg-gray-900 p-5 rounded-2xl border border-gray-800 space-y-4">
-            <h3 class="font-bold text-sm text-gray-300">रूम एवं सीट मॉनिटरिंग (Seat Locking & Kick Control)</h3>
-            <div id="roomsContainer" class="space-y-4"></div>
+        <!-- 5-TAB BOTTOM NAVIGATION -->
+        <div class="absolute bottom-0 left-0 right-0 h-16 bg-gray-900 border-t border-gray-800 flex justify-around items-center z-20 px-2">
+            <button onclick="switchTab('Home')" id="navHome" class="flex flex-col items-center text-pink-500"><i class="fa-solid fa-house text-lg"></i><span class="text-[10px] mt-0.5">Home</span></button>
+            <button onclick="switchTab('Profile')" id="navProfile" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-user text-lg"></i><span class="text-[10px] mt-0.5">Me</span></button>
         </div>
     </div>
 
     <script>
         const socket = io();
+        let myName = "User";
+        let onSeat = false;
 
-        async function fetchAdminData() {
-            const res = await fetch('/api/admin/stats');
-            const data = await res.json();
-            
-            document.getElementById('totalRooms').innerText = data.activeRooms;
-            document.getElementById('totalUsers').innerText = data.totalUsers;
+        function loginUser() {
+            const val = document.getElementById('usernameInput').value.trim();
+            if(val) myName = val;
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('profileNameDisplay').innerText = myName;
+            document.getElementById('profileInitial').innerText = myName.charAt(0).toUpperCase();
+            socket.emit('join_room', { name: myName });
+        }
 
-            const container = document.getElementById('roomsContainer');
-            container.innerHTML = '';
+        function switchTab(tabName) {
+            ['Home', 'Profile'].forEach(t => {
+                document.getElementById('view' + t).classList.add('hidden');
+            });
+            document.getElementById('view' + tabName).classList.remove('hidden');
+        }
 
-            Object.keys(data.roomsData).forEach(roomId => {
-                const room = data.roomsData[roomId];
-                container.innerHTML += `
-                    <div class="bg-gray-800/40 p-4 rounded-xl border border-gray-700 space-y-3">
-                        <div class="flex justify-between items-center">
-                            <h4 class="font-bold text-sm">${room.name} (${room.id})</h4>
-                            <span class="text-xs text-gray-400">9 Seats Grid</span>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2 text-xs">
-                            ${room.seats.map((s, idx) => `
-                                <div class="bg-gray-900 p-2 rounded-lg border border-gray-800 flex justify-between items-center">
-                                    <span>Seat #${idx+1}: ${s ? s.name : 'Empty'}</span>
-                                    ${s ? `<button onclick="kickSeat(${idx})" class="text-red-400 font-bold px-2">Kick</button>` : ''}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
+        function switchHomeTab(sub) {
+            document.getElementById('subTabChatrooms').classList.toggle('hidden', sub !== 'chatrooms');
+            document.getElementById('subTabMessages').classList.toggle('hidden', sub !== 'messages');
+        }
+
+        function openVoiceRoom() { document.getElementById('viewVoiceRoom').classList.remove('hidden'); }
+        
+        // Exit Room -> Immediately Go to Home Page
+        function closeVoiceRoom() {
+            if (onSeat) socket.emit('leave_seat');
+            document.getElementById('viewVoiceRoom').classList.add('hidden');
+            switchTab('Home');
+        }
+
+        // Push-to-Talk Logic (Hold to Speak)
+        const pttBtn = document.getElementById('pttButton');
+        pttBtn.addEventListener('mousedown', startPTT);
+        pttBtn.addEventListener('mouseup', stopPTT);
+        pttBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startPTT(); });
+        pttBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopPTT(); });
+
+        function startPTT() {
+            pttBtn.classList.replace('bg-purple-600', 'bg-red-600');
+            socket.emit('ptt_start');
+        }
+
+        function stopPTT() {
+            pttBtn.classList.replace('bg-red-600', 'bg-purple-600');
+            socket.emit('ptt_stop');
+        }
+
+        socket.on('init_room', (data) => {
+            renderSeats(data.room.seats);
+            document.getElementById('announcementText').innerText = data.room.announcement;
+        });
+
+        socket.on('entrance_effect', (data) => {
+            const banner = document.getElementById('entranceBanner');
+            banner.innerText = data.message;
+            banner.classList.remove('hidden');
+            setTimeout(() => banner.classList.add('hidden'), 4000);
+        });
+
+        socket.on('update_seats', (seats) => { renderSeats(seats); });
+
+        function renderSeats(seats) {
+            const grid = document.getElementById('seatsGrid');
+            grid.innerHTML = '';
+            seats.forEach((seat, index) => {
+                let cls = "w-14 h-14 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center relative cursor-pointer";
+                let content = `<i class="fa-solid fa-lock text-gray-500 text-xs"></i>`;
+                let name = `${index + 1}`;
+
+                if (seat) {
+                    cls = `w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center relative cursor-pointer avatar-border-vip ${seat.speaking ? 'speaking' : ''}`;
+                    content = `<i class="fa-solid fa-microphone text-pink-400 text-xs"></i>`;
+                    name = seat.name;
+                    if (seat.name === myName) onSeat = true;
+                }
+                grid.innerHTML += `<div class="flex flex-col items-center" onclick="requestSeat(${index})"><div class="${cls}">${content}</div><span class="text-[10px] mt-1 text-gray-300 truncate w-14 text-center">${name}</span></div>`;
             });
         }
 
-        function kickSeat(seatIndex) {
-            socket.emit('admin_action', { action: 'kick_seat', seatIndex });
-            setTimeout(fetchAdminData, 500);
+        function requestSeat(index) {
+            socket.emit('request_seat', { seatIndex: index });
         }
 
-        fetchAdminData();
+        function playRoomMusic() {
+            socket.emit('play_music', { trackName: "Chill Beats", trackUrl: "sample.mp3" });
+            alert("룸 में म्यूजिक चालू कर दिया गया है!");
+        }
+
+        async function checkAndStartCall(type, targetName) {
+            const res = await fetch('/api/check-call-permission', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sender: myName, receiver: targetName })
+            });
+            const data = await res.json();
+            if (data.allowed) {
+                alert(`${type.toUpperCase()} Call शुरू हो रही है...`);
+            } else {
+                alert('⚠️ कॉलिंग नियम: दोनों तरफ से मैसेज चैट होना ज़रूरी है!');
+            }
+        }
+
+        function sendGift(name, id, cost) {
+            socket.emit('send_gift', { giftId: id, giftName: name, cost });
+        }
+
+        socket.on('gift_animation', (data) => {
+            const log = document.getElementById('chatLog');
+            log.innerHTML += `<div class="bg-yellow-900/40 border border-yellow-600 p-2 rounded text-yellow-300 font-bold">${data.message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        });
+
+        function sendMessage() {
+            const inp = document.getElementById('messageInput');
+            if(inp.value.trim()) { socket.emit('send_message', { receiver: 'Rahul Verma', text: inp.value }); inp.value = ''; }
+        }
+
+        socket.on('chat_message', (data) => {
+            const log = document.getElementById('chatLog');
+            log.innerHTML += `<div class="bg-gray-800/40 p-2 rounded"><span class="font-bold text-blue-400">${data.sender}:</span> ${data.text}</div>`;
+            log.scrollTop = log.scrollHeight;
+        });
+
+        function editProfileDp() {
+            const newBg = prompt("नया Background Image URL दर्ज करें:");
+            if(newBg) document.getElementById('profileBgDp').style.backgroundImage = `url('${newBg}')`;
+        }
     </script>
 </body>
 </html>
