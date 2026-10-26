@@ -3,154 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChitChat - Master Admin Dashboard</title>
+    <title>ChitChat - Admin Panel Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body class="bg-gray-950 text-white font-sans p-6">
-
-    <!-- SECURE KEY LOGIN MODAL -->
-    <div id="adminLoginModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-        <div class="bg-gray-900 border border-amber-500/50 p-6 rounded-3xl max-w-sm w-full text-center shadow-2xl">
-            <div class="w-16 h-16 bg-amber-500/20 rounded-full mx-auto flex items-center justify-center text-amber-400 text-2xl mb-3 border border-amber-500">
-                <i class="fa-solid fa-shield-halved"></i>
-            </div>
-            <h2 class="text-xl font-black text-white">Owner Admin Access</h2>
-            <p class="text-xs text-gray-400 mt-1 mb-4">Secure Secret Key darj karein</p>
-            
-            <input type="password" id="secretKeyInput" placeholder="Secret Key likhein..." class="w-full py-3 px-4 bg-gray-800 border border-gray-700 rounded-xl text-sm mb-3 text-center text-amber-400 focus:outline-none focus:border-amber-500">
-            <button onclick="verifyAdminKey()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-black font-extrabold rounded-xl text-sm shadow-lg transition">Unlock Panel 🚀</button>
-            <p id="errorMsg" class="text-xs text-red-400 mt-2 font-bold"></p>
-        </div>
-    </div>
-
-    <!-- MASTER ADMIN DASHBOARD -->
-    <div id="adminDashboard" class="hidden max-w-6xl mx-auto space-y-6">
-        <div class="flex justify-between items-center bg-gray-900 p-4 rounded-2xl border border-gray-800 shadow">
-            <div>
-                <h1 class="text-xl font-black text-amber-400"><i class="fa-solid fa-crown"></i> ChitChat Master Admin Control</h1>
-                <p class="text-xs text-gray-400">Total System Control & Moderation</p>
-            </div>
-            <button onclick="location.reload()" class="bg-red-600/20 border border-red-500 text-red-400 px-4 py-2 rounded-xl text-xs font-bold">Lock Panel</button>
+    <div class="max-w-4xl mx-auto space-y-6">
+        <div class="flex justify-between items-center bg-gray-900 p-4 rounded-2xl border border-gray-800">
+            <h1 class="text-xl font-bold text-yellow-400 flex items-center gap-2"><i class="fa-solid fa-shield-halved"></i> ChitChat Super Admin Control Panel</h1>
+            <button onclick="fetchAdminData()" class="bg-blue-600 px-4 py-2 rounded-xl text-xs font-bold">रिफ्रेश डेटा</button>
         </div>
 
-        <!-- GLOBAL ANNOUNCEMENT SECTION -->
-        <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800 space-y-2">
-            <h3 class="text-xs font-bold text-sky-400 uppercase tracking-wider"><i class="fa-solid fa-bullhorn"></i> Global Flash Announcement</h3>
-            <div class="flex gap-2">
-                <input type="text" id="globalMsgInput" placeholder="Poori app ke liye flash message likhein..." class="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:outline-none">
-                <button onclick="sendGlobalAnnouncement()" class="bg-sky-500 text-black font-bold px-4 py-2 rounded-xl text-xs">Broadcast</button>
-            </div>
+        <!-- Live Metrics -->
+        <div class="grid grid-cols-3 gap-4">
+            <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800"><p class="text-xs text-gray-400">एक्टिव लाइव रूम्स</p><h2 id="totalRooms" class="text-2xl font-bold text-pink-500">1</h2></div>
+            <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800"><p class="text-xs text-gray-400">कुल लाइव यूज़र्स</p><h2 id="totalUsers" class="text-2xl font-bold text-yellow-400">0</h2></div>
+            <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800"><p class="text-xs text-gray-400">सिस्टम स्टेटस</p><h2 class="text-2xl font-bold text-green-400">ऑनलाइन 🟢</h2></div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- REGISTERED USERS MANAGEMENT -->
-            <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800">
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-users"></i> Registered Users List</h3>
-                <div id="usersListContainer" class="space-y-2 max-h-80 overflow-y-auto"></div>
-            </div>
-
-            <!-- ROOMS & FORCE SEAT CONTROL -->
-            <div class="bg-gray-900 p-4 rounded-2xl border border-gray-800">
-                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3"><i class="fa-solid fa-microphone-lines"></i> Active Rooms & Force Seats</h3>
-                <div id="adminRoomsContainer" class="space-y-3 max-h-80 overflow-y-auto"></div>
-            </div>
+        <!-- Active Rooms & 9-Seat Controls -->
+        <div class="bg-gray-900 p-5 rounded-2xl border border-gray-800 space-y-4">
+            <h3 class="font-bold text-sm text-gray-300">रूम एवं सीट मॉनिटरिंग (Seat Locking & Kick Control)</h3>
+            <div id="roomsContainer" class="space-y-4"></div>
         </div>
     </div>
 
     <script>
         const socket = io();
 
-        function verifyAdminKey() {
-            const secretKey = document.getElementById('secretKeyInput').value.trim();
-            socket.emit('admin_login', { secretKey });
-        }
+        async function fetchAdminData() {
+            const res = await fetch('/api/admin/stats');
+            const data = await res.json();
+            
+            document.getElementById('totalRooms').innerText = data.activeRooms;
+            document.getElementById('totalUsers').innerText = data.totalUsers;
 
-        socket.on('admin_auth_success', (data) => {
-            document.getElementById('adminLoginModal').classList.add('hidden');
-            document.getElementById('adminDashboard').classList.remove('hidden');
-            renderAdminData(data);
-        });
+            const container = document.getElementById('roomsContainer');
+            container.innerHTML = '';
 
-        socket.on('admin_auth_failed', (errText) => {
-            document.getElementById('errorMsg').innerText = errText;
-        });
-
-        socket.on('admin_refresh_data', (data) => {
-            renderAdminData(data);
-        });
-
-        function renderAdminData(data) {
-            // Render Users
-            const userContainer = document.getElementById('usersListContainer');
-            userContainer.innerHTML = '';
-            if (data.users.length === 0) {
-                userContainer.innerHTML = `<p class="text-xs text-gray-500">Koi user online nahi hai.</p>`;
-            } else {
-                data.users.forEach(u => {
-                    userContainer.innerHTML += `
-                        <div class="bg-gray-800/60 p-3 rounded-xl border border-gray-700 flex justify-between items-center text-xs">
-                            <div>
-                                <p class="font-bold text-white">${u.name} <span class="text-[10px] text-sky-400">(${u.contact})</span></p>
-                                <p class="text-[9px] text-gray-400">Status: ${u.banned ? '<span class="text-red-400 font-bold">BANNED</span>' : '<span class="text-green-400">Active</span>'}</p>
-                            </div>
-                            <button onclick="toggleUserBan('${u.id}')" class="${u.banned ? 'bg-green-600 text-white' : 'bg-red-600 text-white'} px-3 py-1 rounded-lg font-bold text-[10px]">
-                                ${u.banned ? 'Unban' : 'Ban'}
-                            </button>
+            Object.keys(data.roomsData).forEach(roomId => {
+                const room = data.roomsData[roomId];
+                container.innerHTML += `
+                    <div class="bg-gray-800/40 p-4 rounded-xl border border-gray-700 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-sm">${room.name} (${room.id})</h4>
+                            <span class="text-xs text-gray-400">9 Seats Grid</span>
                         </div>
-                    `;
-                });
-            }
-
-            // Render Rooms & Seats
-            const roomContainer = document.getElementById('adminRoomsContainer');
-            roomContainer.innerHTML = '';
-            if (data.rooms.length === 0) {
-                roomContainer.innerHTML = `<p class="text-xs text-gray-500">Koi active room nahi hai.</p>`;
-            } else {
-                data.rooms.forEach(room => {
-                    let seatsHtml = '';
-                    room.seats.forEach((seat, idx) => {
-                        let occupied = !!seat;
-                        seatsHtml += `
-                            <div class="bg-gray-800 p-1.5 rounded text-center text-[10px] border border-gray-700">
-                                <span class="block text-amber-400 font-bold">S${idx+1}</span>
-                                <span class="truncate block text-gray-300">${occupied ? seat.name : 'Empty'}</span>
-                                ${occupied ? `<button onclick="forceRemoveSeat('${room.id}',${idx})" class="mt-1 bg-red-900 text-red-200 px-1 py-0.5 rounded text-[8px] font-bold">Kick</button>` : ''}
-                            </div>
-                        `;
-                    });
-
-                    roomContainer.innerHTML += `
-                        <div class="bg-gray-800/60 p-3 rounded-xl border border-gray-700 space-y-2">
-                            <div class="flex justify-between items-center text-xs">
-                                <span class="font-bold text-amber-400">👑 ${room.roomName}</span>
-                                <span class="text-[9px] text-gray-400">Host: ${room.hostName}</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-1.5">${seatsHtml}</div>
+                        <div class="grid grid-cols-3 gap-2 text-xs">
+                            ${room.seats.map((s, idx) => `
+                                <div class="bg-gray-900 p-2 rounded-lg border border-gray-800 flex justify-between items-center">
+                                    <span>Seat #${idx+1}: ${s ? s.name : 'Empty'}</span>
+                                    ${s ? `<button onclick="kickSeat(${idx})" class="text-red-400 font-bold px-2">Kick</button>` : ''}
+                                </div>
+                            `).join('')}
                         </div>
-                    `;
-                });
-            }
+                    </div>
+                `;
+            });
         }
 
-        function toggleUserBan(targetSocketId) {
-            socket.emit('admin_toggle_ban', { targetSocketId });
+        function kickSeat(seatIndex) {
+            socket.emit('admin_action', { action: 'kick_seat', seatIndex });
+            setTimeout(fetchAdminData, 500);
         }
 
-        function forceRemoveSeat(roomId, seatIndex) {
-            socket.emit('admin_force_seat', { roomId, seatIndex, targetSocketId: null, targetName: null });
-        }
-
-        function sendGlobalAnnouncement() {
-            const message = document.getElementById('globalMsgInput').value.trim();
-            if (message) {
-                socket.emit('admin_global_announcement', { message });
-                document.getElementById('globalMsgInput').value = '';
-                alert("Global Flash Announcement bhej di gayi hai!");
-            }
-        }
+        fetchAdminData();
     </script>
 </body>
 </html>
