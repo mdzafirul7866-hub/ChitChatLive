@@ -3,290 +3,313 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChitChat - 9-Seat Voice Club</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="/socket.io/socket.io.js"></script>
+    <title>ChitChat Live - Dual Room System</title>
     <style>
-        @keyframes pulse-ring {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.8); }
-            70% { transform: scale(1.08); box-shadow: 0 0 0 14px rgba(236, 72, 153, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
-        }
-        .speaking { animation: pulse-ring 1.2s infinite; border: 3px solid #ec4899; }
-        .avatar-border-vip { border: 3px solid #f59e0b; box-shadow: 0 0 10px #f59e0b; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #0b0b16; color: #fff; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 480px; height: 100vh; background: #151528; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        
+        .screen { display: none; flex: 1; flex-direction: column; overflow-y: auto; padding-bottom: 70px; }
+        .screen.active { display: flex; }
+
+        .login-box { position: absolute; inset: 0; background: #121222; z-index: 200; display: flex; flex-direction: column; justify-content: center; padding: 30px; }
+        .input-field { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #222238; color: #fff; outline: none; }
+        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #00e676; color: #000; font-weight: bold; cursor: pointer; margin-top: 10px; }
+
+        .nav-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: #1e1e38; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 100; }
+        .nav-item { background: none; border: none; color: #888; font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
+        .nav-item.active { color: #00e676; }
+
+        .p-15 { padding: 15px; }
+        .card { background: #222238; padding: 15px; border-radius: 12px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #00e676; }
+        .card.ptt-card { border-left-color: #e91e63; }
+
+        .profile-header { text-align: center; padding: 20px; background: #1e1e38; }
+        .avatar { width: 80px; height: 80px; border-radius: 50%; background: #6200ea; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 10px; }
+
+        /* 10 Seats Grid (2 columns or 5 columns) */
+        .seats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 15px; }
+        .seat { height: 65px; border-radius: 8px; background: #222238; border: 2px dashed #444; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
+        .seat.occupied { border: 2px solid #00b0ff; background: #282848; }
+        .seat.talking { border: 2px solid #00e676; box-shadow: 0 0 10px #00e676; }
+
+        /* PTT Container (Hidden for Family Room, Shown for PTT Room) */
+        .ptt-container { text-align: center; padding: 15px; display: none; }
+        .ptt-btn { width: 90px; height: 90px; border-radius: 50%; border: none; background: #e91e63; color: white; font-weight: bold; cursor: pointer; user-select: none; touch-action: manipulation; }
+
+        .admin-modal { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.85); padding: 20px; z-index: 150; }
     </style>
 </head>
-<body class="bg-gray-950 text-white font-sans antialiased flex justify-center items-center h-screen overflow-hidden">
+<body>
+
+<div class="app-container">
 
     <!-- LOGIN SCREEN -->
-    <div id="loginScreen" class="fixed inset-0 bg-gray-950 z-50 flex flex-col justify-between p-6 max-w-md mx-auto">
-        <div class="text-center mt-12">
-            <div class="inline-block p-4 bg-gradient-to-tr from-pink-600 to-purple-600 rounded-3xl mb-4 shadow-xl shadow-pink-600/40">
-                <i class="fa-solid fa-microphone-lines text-4xl text-white"></i>
-            </div>
-            <h1 class="text-3xl font-extrabold tracking-wider text-pink-500">ChitChat</h1>
-            <p class="text-gray-400 text-sm mt-1">9-Seat Voice Club & Social App</p>
-        </div>
-        <div class="space-y-4 w-full">
-            <input type="text" id="usernameInput" placeholder="अपना नाम या यूज़र आईडी दर्ज करें..." class="w-full py-3.5 px-4 bg-gray-900 border border-gray-700 rounded-2xl text-sm focus:outline-none focus:border-pink-500 text-white">
-            <button onclick="loginUser()" class="w-full py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-2xl font-bold shadow-lg shadow-pink-600/30">ऐप में प्रवेश करें 🚀</button>
-        </div>
-        <p class="text-center text-xs text-gray-500">Push-to-Talk & WebRTC Enabled</p>
-    </div>
-
-    <!-- MAIN APP WRAPPER -->
-    <div id="mainApp" class="hidden flex flex-col h-full w-full max-w-md bg-gray-900 shadow-2xl relative">
+    <div class="login-box" id="loginScreen">
+        <h2>लॉगिन / साइन अप</h2>
+        <input type="text" id="phoneInput" class="input-field" placeholder="मोबाइल नंबर">
+        <button class="btn" onclick="sendOTP()">OTP भेजें</button>
         
-        <!-- HEADER -->
-        <div id="topHeader" class="flex items-center justify-between p-4 bg-gray-900/90 border-b border-gray-800">
-            <div class="flex gap-4 text-sm font-bold text-gray-400">
-                <button onclick="switchHomeTab('chatrooms')" id="tabChatrooms" class="text-pink-500 border-b-2 border-pink-500 pb-1">Chatrooms</button>
-                <button onclick="switchHomeTab('messages')" id="tabMessages" class="hover:text-white">Messages</button>
-            </div>
-            <button onclick="openWalletModal()" class="bg-gray-800 px-3 py-1 rounded-full text-xs font-bold text-yellow-400 flex items-center gap-1 border border-yellow-600/30">
-                <i class="fa-solid fa-coins"></i> <span id="coinBalance">1000</span>
-            </button>
-        </div>
-
-        <!-- CONTENT VIEWS -->
-        <div class="flex-1 overflow-y-auto relative pb-20">
-
-            <!-- HOME VIEW -->
-            <div id="viewHome" class="p-4 space-y-4">
-                <div id="subTabChatrooms" class="space-y-3">
-                    <div class="flex justify-between items-center bg-gray-800/60 p-3 rounded-2xl border border-gray-700/50">
-                        <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center font-bold text-lg">🎙️</div>
-                            <div>
-                                <h3 class="font-bold text-sm">आवाज 🌸 सुनने ❤️ को</h3>
-                                <p class="text-xs text-gray-400">9-Seat Voice Club</p>
-                            </div>
-                        </div>
-                        <button onclick="openVoiceRoom()" class="bg-pink-600 hover:bg-pink-500 px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-pink-600/30">जॉइन करें</button>
-                    </div>
-                </div>
-
-                <!-- MESSAGES SUBTAB -->
-                <div id="subTabMessages" class="hidden space-y-2">
-                    <div class="flex items-center justify-between bg-gray-800/40 p-3 rounded-2xl border border-gray-800">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold">R</div>
-                            <div>
-                                <h4 class="text-sm font-bold">Rahul Verma</h4>
-                                <p class="text-xs text-gray-400">नमस्ते भाई!</p>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="checkAndStartCall('audio', 'Rahul Verma')" class="p-2 bg-green-600/30 text-green-400 rounded-full"><i class="fa-solid fa-phone text-xs"></i></button>
-                            <button onclick="checkAndStartCall('video', 'Rahul Verma')" class="p-2 bg-purple-600/30 text-purple-400 rounded-full"><i class="fa-solid fa-video text-xs"></i></button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PROFILE VIEW (WITH BACK DP EDIT) -->
-            <div id="viewProfile" class="hidden p-4 space-y-4">
-                <div class="relative bg-gray-800/60 rounded-3xl overflow-hidden border border-gray-800 pb-4">
-                    <!-- Background DP -->
-                    <div id="profileBgDp" class="h-28 bg-cover bg-center" style="background-image: url('https://via.placeholder.com/400x150');"></div>
-                    <div class="flex items-center gap-4 px-4 -mt-8">
-                        <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-pink-600 to-purple-600 border-4 border-gray-900 flex items-center justify-center text-2xl font-bold avatar-border-vip" id="profileInitial">U</div>
-                        <div class="mt-6">
-                            <h3 id="profileNameDisplay" class="font-bold text-base">User</h3>
-                            <p class="text-xs text-pink-400">UID: #741829 | VIP 👑</p>
-                        </div>
-                    </div>
-                    <div class="px-4 mt-3">
-                        <button onclick="editProfileDp()" class="w-full py-2 bg-gray-800 border border-gray-700 rounded-xl text-xs text-gray-300 font-bold">✏️ Edit Profile & Back DP</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 9-SEAT VOICE CLUB ROOM OVERLAY -->
-            <div id="viewVoiceRoom" class="hidden absolute inset-0 bg-gray-900 z-30 flex flex-col p-4">
-                <div class="flex items-center justify-between border-b border-gray-800 pb-3">
-                    <div class="flex items-center gap-2">
-                        <button onclick="closeVoiceRoom()" class="text-gray-400"><i class="fa-solid fa-arrow-left"></i></button>
-                        <h2 class="text-sm font-bold truncate">आवाज 🌸 सुनने ❤️ को</h2>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="playRoomMusic()" class="bg-blue-600 px-3 py-1 rounded-xl text-xs font-bold"><i class="fa-solid fa-music"></i> म्यूजिक</button>
-                        <button onclick="closeVoiceRoom()" class="bg-red-600/40 text-red-300 px-3 py-1 rounded-xl text-xs font-bold">एग्जिट</button>
-                    </div>
-                </div>
-
-                <!-- Entrance Animation Notification -->
-                <div id="entranceBanner" class="hidden bg-pink-900/60 border border-pink-500/40 p-2 rounded-xl text-xs text-pink-300 text-center my-2"></div>
-
-                <!-- 9 Seats Grid -->
-                <div id="seatsGrid" class="grid grid-cols-3 gap-4 py-3"></div>
-
-                <!-- Announcement -->
-                <div class="bg-gray-800/60 p-2.5 rounded-xl text-xs border border-gray-700/50">
-                    <p class="font-bold text-pink-400">📢 घोषणा:</p>
-                    <p id="announcementText" class="text-gray-300">लोड हो रहा है...</p>
-                </div>
-
-                <!-- Chat Log -->
-                <div id="chatLog" class="flex-1 overflow-y-auto space-y-2 text-xs my-2 bg-gray-950/40 p-2 rounded-xl"></div>
-
-                <!-- PTT (PUSH-TO-TALK) MIC & FOOTER CONTROLS -->
-                <div class="flex items-center gap-2 pt-2 border-t border-gray-800">
-                    <input type="text" id="messageInput" placeholder="संदेश भेजें..." class="flex-1 bg-gray-800 border border-gray-700 rounded-full px-4 py-2 text-xs focus:outline-none focus:border-pink-500 text-white">
-                    <button onclick="sendMessage()" class="bg-pink-600 w-9 h-9 rounded-full flex items-center justify-center"><i class="fa-solid fa-paper-plane text-xs"></i></button>
-                    
-                    <!-- PTT Touch-and-Hold Mic Button -->
-                    <button id="pttButton" class="bg-purple-600 hover:bg-purple-500 w-11 h-11 rounded-full flex items-center justify-center font-bold text-xs select-none touch-none shadow-lg shadow-purple-600/40">
-                        <i class="fa-solid fa-microphone"></i>
-                    </button>
-
-                    <button onclick="sendGift('Special Gift', 103, 150)" class="bg-yellow-600 w-9 h-9 rounded-full flex items-center justify-center"><i class="fa-solid fa-gift text-xs"></i></button>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- 5-TAB BOTTOM NAVIGATION -->
-        <div class="absolute bottom-0 left-0 right-0 h-16 bg-gray-900 border-t border-gray-800 flex justify-around items-center z-20 px-2">
-            <button onclick="switchTab('Home')" id="navHome" class="flex flex-col items-center text-pink-500"><i class="fa-solid fa-house text-lg"></i><span class="text-[10px] mt-0.5">Home</span></button>
-            <button onclick="switchTab('Profile')" id="navProfile" class="flex flex-col items-center text-gray-400"><i class="fa-solid fa-user text-lg"></i><span class="text-[10px] mt-0.5">Me</span></button>
+        <div id="otpDiv" style="display:none; margin-top:10px;">
+            <input type="text" id="otpInput" class="input-field" placeholder="OTP (Demo: 1234)">
+            <input type="text" id="usernameInput" class="input-field" placeholder="आपका नाम">
+            <input type="text" id="bioInput" class="input-field" placeholder="बायो लिखें...">
+            <input type="text" id="interestInput" class="input-field" placeholder="रुचियां (Interests)...">
+            <button class="btn" style="background:#00b0ff; color:#fff;" onclick="verifyAndLogin()">प्रवेश करें</button>
         </div>
     </div>
 
-    <script>
-        const socket = io();
-        let myName = "User";
-        let onSeat = false;
+    <!-- 1. HOME SCREEN (Room Selection) -->
+    <div class="screen active" id="screenHome">
+        <div class="p-15">
+            <h3>🏠 होम पेज - रूम चुनें</h3>
+            <p style="font-size:12px; color:#aaa; margin-top:5px;">अपनी पसंद के अनुसार रूम में प्रवेश करें:</p>
+            <div style="margin-top: 20px;">
+                
+                <!-- Family Group Room (Open Call, 10 Seats) -->
+                <div class="card" onclick="joinRoom('family_room')">
+                    <h4>📞 Family Group (10 सीट्स)</h4>
+                    <p style="font-size:12px; color:#aaa; margin-top:3px;">फोन कॉल जैसा नॉर्मल ओपन माइक (बिना बटन दबाए बात करें)</p>
+                </div>
 
-        function loginUser() {
-            const val = document.getElementById('usernameInput').value.trim();
-            if(val) myName = val;
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('profileNameDisplay').innerText = myName;
-            document.getElementById('profileInitial').innerText = myName.charAt(0).toUpperCase();
-            socket.emit('join_room', { name: myName });
-        }
+                <!-- Pange / Live Room (15s PTT, 10 Seats) -->
+                <div class="card ptt-card" onclick="joinRoom('ptt_room')">
+                    <h4>🔥 Pange & Live Room (15s PTT)</h4>
+                    <p style="font-size:12px; color:#aaa; margin-top:3px;">15 सेकंड होल्ड-टू-टॉक माइक सिस्टम (मस्ती और पंगे के लिए)</p>
+                </div>
 
-        function switchTab(tabName) {
-            ['Home', 'Profile'].forEach(t => {
-                document.getElementById('view' + t).classList.add('hidden');
-            });
-            document.getElementById('view' + tabName).classList.remove('hidden');
-        }
+            </div>
+        </div>
+    </div>
 
-        function switchHomeTab(sub) {
-            document.getElementById('subTabChatrooms').classList.toggle('hidden', sub !== 'chatrooms');
-            document.getElementById('subTabMessages').classList.toggle('hidden', sub !== 'messages');
-        }
+    <!-- 2. SEARCH SCREEN -->
+    <div class="screen" id="screenSearch">
+        <div class="p-15">
+            <h3>🔍 सर्च यूजर</h3>
+            <div id="userListContainer" style="margin-top: 15px;"></div>
+        </div>
+    </div>
 
-        function openVoiceRoom() { document.getElementById('viewVoiceRoom').classList.remove('hidden'); }
+    <!-- 3. ACTIVE ROOM SCREEN (Dynamic for Both) -->
+    <div class="screen" id="screenRoom">
+        <div class="p-15" style="display:flex; justify-content:space-between; align-items:center; background:#1e1e38;">
+            <h4 id="roomHeaderTitle">Room</h4>
+            <div>
+                <button onclick="openAdmin()" style="background:#ff9800; border:none; padding:5px 8px; border-radius:5px; color:#fff; cursor:pointer; margin-right:5px;">Admin</button>
+                <button onclick="switchScreen('screenHome')" style="background:#ff5252; border:none; padding:5px 8px; border-radius:5px; color:#fff; cursor:pointer;">Exit</button>
+            </div>
+        </div>
         
-        // Exit Room -> Immediately Go to Home Page
-        function closeVoiceRoom() {
-            if (onSeat) socket.emit('leave_seat');
-            document.getElementById('viewVoiceRoom').classList.add('hidden');
-            switchTab('Home');
+        <p style="text-align:center; font-size:11px; color:#00e676; margin-top:8px;" id="roomModeDesc">Mode Description</p>
+
+        <!-- 10 Seats Grid -->
+        <div class="seats-grid" id="seatsGrid"></div>
+        
+        <!-- PTT Button Section (Only visible in PTT Room) -->
+        <div class="ptt-container" id="pttContainer">
+            <button class="ptt-btn" id="pttBtn">होल्ड करें<br>(15s)</button>
+            <p id="timerTxt" style="font-size:12px; color:#ffeb3b; margin-top:8px;">माइक को दबाकर रखें बात करने के लिए</p>
+        </div>
+    </div>
+
+    <!-- 4. PROFILE SCREEN -->
+    <div class="screen" id="screenProfile">
+        <div class="profile-header">
+            <div class="avatar" id="profileAvatar">👤</div>
+            <h3 id="profileName">User</h3>
+            <p style="font-size:12px; color:#aaa;" id="profilePhone">+91...</p>
+        </div>
+        <div class="p-15">
+            <h4>बायो (Bio)</h4>
+            <input type="text" id="editBio" class="input-field">
+            <h4 style="margin-top:10px;">पसंद (Interests)</h4>
+            <input type="text" id="editInterests" class="input-field">
+            <button class="btn" onclick="saveProfile()">सेव करें</button>
+        </div>
+    </div>
+
+    <!-- ADMIN MODAL -->
+    <div class="admin-modal" id="adminModal">
+        <h3>Admin Access Panel</h3>
+        <input type="password" id="adminPassInput" class="input-field" placeholder="एडमिन पासवर्ड डालें">
+        <button class="btn" onclick="loginAdmin()">लॉगिन</button>
+        <button class="btn" style="background:#555; color:#fff;" onclick="closeAdmin()">बंद करें</button>
+        <div id="adminStatus" style="margin-top:15px; color:#00e676; display:none;">एडमिन एक्टिव! सीट पर क्लिक करके यूजर किक करें।</div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
+    <div class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('screenHome', this)">🏠 होम</button>
+        <button class="nav-item" onclick="switchTab('screenSearch', this)">🔍 सर्च</button>
+        <button class="nav-item" onclick="switchTab('screenProfile', this)">👤 प्रोफाइल</button>
+    </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    let myPhone = "";
+    let currentRoomType = "";
+    let pttTimer = null;
+    let pttSecondsLeft = 15;
+    let isHoldingMic = false;
+    let isAdminLoggedIn = false;
+
+    function switchTab(screenId, btn) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    async function sendOTP() {
+        myPhone = document.getElementById('phoneInput').value;
+        if (!myPhone) return alert("नंबर डालें!");
+        const res = await fetch('/api/send-otp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({phone: myPhone}) });
+        const d = await res.json();
+        alert(d.msg);
+        if(d.success) document.getElementById('otpDiv').style.display = 'block';
+    }
+
+    async function verifyAndLogin() {
+        const otp = document.getElementById('otpInput').value;
+        const username = document.getElementById('usernameInput').value;
+        const bio = document.getElementById('bioInput').value;
+        const interests = document.getElementById('interestInput').value;
+
+        const res = await fetch('/api/verify-otp', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({phone: myPhone, otp}) });
+        const d = await res.json();
+        if(d.success) {
+            document.getElementById('loginScreen').style.display = 'none';
+            socket.emit('auth_login', { phone: myPhone, username, bio, interests });
+        } else alert(d.msg);
+    }
+
+    socket.on('auth_success', (user) => {
+        document.getElementById('profileName').innerText = user.name;
+        document.getElementById('profilePhone').innerText = user.phone;
+        document.getElementById('editBio').value = user.bio;
+        document.getElementById('editInterests').value = user.interests;
+        document.getElementById('profileAvatar').innerText = user.name.charAt(0).toUpperCase();
+    });
+
+    function saveProfile() {
+        socket.emit('update_profile', { bio: document.getElementById('editBio').value, interests: document.getElementById('editInterests').value });
+        alert("प्रोफाइल अपडेट हो गई!");
+    }
+
+    function joinRoom(roomId) {
+        socket.emit('join_room', roomId);
+        switchScreen('screenRoom');
+    }
+
+    // Receive Room Info & Adjust UI (Open Mic vs PTT)
+    socket.on('room_info', (room) => {
+        currentRoomType = room.type;
+        document.getElementById('roomHeaderTitle').innerText = room.title;
+        
+        const pttContainer = document.getElementById('pttContainer');
+        const modeDesc = document.getElementById('roomModeDesc');
+
+        if (room.type === 'open_mic') {
+            pttContainer.style.display = 'none';
+            modeDesc.innerText = "🔊 ओपन माइक मोड: बिना बटन दबाए खुलकर बात करें (10 सीट्स)";
+        } else {
+            pttContainer.style.display = 'block';
+            modeDesc.innerText = "⚡ PTT मोड: 15 सेकंड माइक होल्ड लिमिट (मस्ती/पंगे रूम)";
         }
+    });
 
-        // Push-to-Talk Logic (Hold to Speak)
-        const pttBtn = document.getElementById('pttButton');
-        pttBtn.addEventListener('mousedown', startPTT);
-        pttBtn.addEventListener('mouseup', stopPTT);
-        pttBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startPTT(); });
-        pttBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopPTT(); });
-
-        function startPTT() {
-            pttBtn.classList.replace('bg-purple-600', 'bg-red-600');
-            socket.emit('ptt_start');
-        }
-
-        function stopPTT() {
-            pttBtn.classList.replace('bg-red-600', 'bg-purple-600');
-            socket.emit('ptt_stop');
-        }
-
-        socket.on('init_room', (data) => {
-            renderSeats(data.room.seats);
-            document.getElementById('announcementText').innerText = data.room.announcement;
-        });
-
-        socket.on('entrance_effect', (data) => {
-            const banner = document.getElementById('entranceBanner');
-            banner.innerText = data.message;
-            banner.classList.remove('hidden');
-            setTimeout(() => banner.classList.add('hidden'), 4000);
-        });
-
-        socket.on('update_seats', (seats) => { renderSeats(seats); });
-
-        function renderSeats(seats) {
-            const grid = document.getElementById('seatsGrid');
-            grid.innerHTML = '';
-            seats.forEach((seat, index) => {
-                let cls = "w-14 h-14 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center relative cursor-pointer";
-                let content = `<i class="fa-solid fa-lock text-gray-500 text-xs"></i>`;
-                let name = `${index + 1}`;
-
-                if (seat) {
-                    cls = `w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center relative cursor-pointer avatar-border-vip ${seat.speaking ? 'speaking' : ''}`;
-                    content = `<i class="fa-solid fa-microphone text-pink-400 text-xs"></i>`;
-                    name = seat.name;
-                    if (seat.name === myName) onSeat = true;
+    socket.on('update_seats', (seats) => {
+        const grid = document.getElementById('seatsGrid');
+        grid.innerHTML = '';
+        seats.forEach((seat, idx) => {
+            const el = document.createElement('div');
+            el.className = `seat ${seat ? 'occupied' : ''} ${seat && seat.isTalking ? 'talking' : ''}`;
+            
+            el.onclick = () => {
+                if(isAdminLoggedIn) {
+                    socket.emit('admin_kick_seat', idx);
+                } else {
+                    seat ? socket.emit('leave_seat') : socket.emit('take_seat', {seatIndex: idx});
                 }
-                grid.innerHTML += `<div class="flex flex-col items-center" onclick="requestSeat(${index})"><div class="${cls}">${content}</div><span class="text-[10px] mt-1 text-gray-300 truncate w-14 text-center">${name}</span></div>`;
-            });
-        }
+            };
 
-        function requestSeat(index) {
-            socket.emit('request_seat', { seatIndex: index });
-        }
+            el.innerHTML = `<div>${seat ? (seat.isTalking ? '🎙️' : '🎧') : '🪑'}</div><div style="font-size:9px; margin-top:2px;">${seat ? seat.name : 'Seat '+(idx+1)}</div>`;
+            grid.appendChild(el);
+        });
+    });
 
-        function playRoomMusic() {
-            socket.emit('play_music', { trackName: "Chill Beats", trackUrl: "sample.mp3" });
-            alert("룸 में म्यूजिक चालू कर दिया गया है!");
-        }
+    // PTT Logic (Only active in PTT room)
+    const pttBtn = document.getElementById('pttBtn');
+    const timerTxt = document.getElementById('timerTxt');
 
-        async function checkAndStartCall(type, targetName) {
-            const res = await fetch('/api/check-call-permission', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sender: myName, receiver: targetName })
-            });
-            const data = await res.json();
-            if (data.allowed) {
-                alert(`${type.toUpperCase()} Call शुरू हो रही है...`);
-            } else {
-                alert('⚠️ कॉलिंग नियम: दोनों तरफ से मैसेज चैट होना ज़रूरी है!');
+    function startTalkingSession(e) {
+        if (e) e.preventDefault();
+        if (currentRoomType !== 'ptt' || isHoldingMic) return;
+
+        isHoldingMic = true;
+        pttSecondsLeft = 15;
+        socket.emit('start_talking');
+
+        pttBtn.style.background = "#00e676";
+        timerTxt.innerText = `बोल रहे हैं: ${pttSecondsLeft}s`;
+
+        pttTimer = setInterval(() => {
+            pttSecondsLeft--;
+            timerTxt.innerText = `बोल रहे हैं: ${pttSecondsLeft}s`;
+            if (pttSecondsLeft <= 0) {
+                stopTalkingSession();
+                timerTxt.innerText = "समय समाप्त! दोबारा होल्ड करें";
             }
-        }
+        }, 1000);
+    }
 
-        function sendGift(name, id, cost) {
-            socket.emit('send_gift', { giftId: id, giftName: name, cost });
-        }
+    function stopTalkingSession(e) {
+        if (e) e.preventDefault();
+        if (currentRoomType !== 'ptt' || !isHoldingMic) return;
 
-        socket.on('gift_animation', (data) => {
-            const log = document.getElementById('chatLog');
-            log.innerHTML += `<div class="bg-yellow-900/40 border border-yellow-600 p-2 rounded text-yellow-300 font-bold">${data.message}</div>`;
-            log.scrollTop = log.scrollHeight;
+        isHoldingMic = false;
+        clearInterval(pttTimer);
+        socket.emit('stop_talking');
+
+        pttBtn.style.background = "#e91e63";
+        if (pttSecondsLeft > 0) timerTxt.innerText = "माइक को दबाकर रखें बात करने के लिए";
+    }
+
+    pttBtn.addEventListener('mousedown', startTalkingSession);
+    pttBtn.addEventListener('mouseup', stopTalkingSession);
+    pttBtn.addEventListener('mouseleave', stopTalkingSession);
+    pttBtn.addEventListener('touchstart', startTalkingSession);
+    pttBtn.addEventListener('touchend', stopTalkingSession);
+
+    function openAdmin() { document.getElementById('adminModal').style.display = 'block'; }
+    function closeAdmin() { document.getElementById('adminModal').style.display = 'none'; }
+    function loginAdmin() { socket.emit('admin_login', document.getElementById('adminPassInput').value); }
+
+    socket.on('admin_auth_res', (d) => {
+        if(d.success) {
+            isAdminLoggedIn = true;
+            document.getElementById('adminStatus').style.display = 'block';
+            alert("एडमिन एक्टिव!");
+        } else alert(d.msg);
+    });
+
+    socket.on('update_user_list', (users) => {
+        const container = document.getElementById('userListContainer');
+        container.innerHTML = '';
+        users.forEach(u => {
+            if(u.id !== socket.id) {
+                container.innerHTML += `<div class="card"><h4>${u.name}</h4><p style="font-size:11px; color:#aaa;">Bio: ${u.bio}</p></div>`;
+            }
         });
-
-        function sendMessage() {
-            const inp = document.getElementById('messageInput');
-            if(inp.value.trim()) { socket.emit('send_message', { receiver: 'Rahul Verma', text: inp.value }); inp.value = ''; }
-        }
-
-        socket.on('chat_message', (data) => {
-            const log = document.getElementById('chatLog');
-            log.innerHTML += `<div class="bg-gray-800/40 p-2 rounded"><span class="font-bold text-blue-400">${data.sender}:</span> ${data.text}</div>`;
-            log.scrollTop = log.scrollHeight;
-        });
-
-        function editProfileDp() {
-            const newBg = prompt("नया Background Image URL दर्ज करें:");
-            if(newBg) document.getElementById('profileBgDp').style.backgroundImage = `url('${newBg}')`;
-        }
-    </script>
+    });
+</script>
 </body>
 </html>
