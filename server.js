@@ -1,180 +1,157 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, { cors: { origin: '*' } });
 
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
-app.use(express.static('public'));
 
-// इन-मेमोरी डेटाबेस
-let rooms = {
-    "main-room": {
-        id: "main-room",
-        name: "आवाज 🌸 सुनने ❤️ को",
-        announcement: "🔥 ChitChat Official Room: नियमों का पालन करें!",
-        seats: Array(9).fill(null), // 9 seats
-        seatLocks: [false, true, true, true, true, true, true, true, true], // Host seat unlocked by default
-        seatRequests: [],
-        currentMusic: null
+const otpStore = {};
+const users = {}; 
+
+// Two Different Room Types
+const rooms = {
+    "family_room": { 
+        id: "family_room", 
+        title: "📞 Family Group (10 Seats Open Call)", 
+        type: "open_mic", // Open mic, no PTT needed
+        seats: Array(10).fill(null) 
+    },
+    "ptt_room": { 
+        id: "ptt_room", 
+        title: "🔥 Pange & Live Room (15s PTT)", 
+        type: "ptt", // Requires holding 15s mic
+        seats: Array(10).fill(null) 
     }
 };
 
-let userWallets = {};
-let messageHistory = {};
-let userProfiles = {};
+const ADMIN_PASSWORD = "admin123password";
 
-// Express API - Check Call Security Permission
-app.post('/api/check-call-permission', (req, res) => {
-    const { sender, receiver } = req.body;
-    const key1 = `${sender}_${receiver}`;
-    const key2 = `${receiver}_${sender}`;
-    const canCall = messageHistory[key1] || messageHistory[key2] || false;
-    res.json({ allowed: canCall });
+// OTP APIs
+app.post('/api/send-otp', (req, res) => {
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ success: false, msg: "मोबाइल नंबर दर्ज करें!" });
+    otpStore[phone] = "1234";
+    res.json({ success: true, msg: "OTP भेज दिया गया है (Demo OTP: 1234)" });
 });
 
-// Express API - Admin Stats
-app.get('/api/admin/stats', (req, res) => {
-    res.json({
-        activeRooms: Object.keys(rooms).length,
-        totalUsers: Object.keys(userWallets).length,
-        roomsData: rooms,
-        usersData: userWallets
-    });
+app.post('/api/verify-otp', (req, res) => {
+    const { phone, otp } = req.body;
+    if (otpStore[phone] && otpStore[phone] === otp) {
+        delete otpStore[phone];
+        return res.json({ success: true, phone });
+    }
+    res.status(400).json({ success: false, msg: "गलत OTP दर्ज किया है!" });
 });
 
 io.on('connection', (socket) => {
-    console.log(`User connected: ${socket.id}`);
 
-    socket.on('join_room', (userData) => {
-        socket.data.user = userData;
-        if (!userWallets[userData.name]) {
-            userWallets[userData.name] = { coins: 1000, vip: true, avatarBorder: 'border-pink-500', socketId: socket.id };
-        } else {
-            userWallets[userData.name].socketId = socket.id;
-        }
-
-        userProfiles[userData.name] = userData.profile || {
-            bio: "ChitChat Enthusiast 🚀",
-            dp: "https://via.placeholder.com/150",
-            bgDp: "https://via.placeholder.com/400x150"
+    socket.on('auth_login', ({ phone, username, bio, interests }) => {
+        users[socket.id] = {
+            id: socket.id,
+            phone,
+            name: username || 'User_' + phone.slice(-4),
+            bio: bio || "Hey there!",
+            interests: interests || "Chat",
+            isAdmin: false
         };
-
-        const room = rooms["main-room"];
-        socket.emit('init_room', { room, wallet: userWallets[userData.name] });
-
-        // Broadcast Entrance Effect
-        io.emit('entrance_effect', {
-            name: userData.name,
-            message: `✨ VIP User ${userData.name} ने रूम में शानदार एंट्री की!`
-        });
+        socket.emit('auth_success', users[socket.id]);
+        io.emit('update_user_list', Object.values(users));
     });
 
-    // Seat Request / Seat Lock Enforcement
-    socket.on('request_seat', ({ seatIndex }) => {
-        const room = rooms["main-room"];
-        const user = socket.data.user;
+    socket.on('update_profile', ({ bio, interests }) => {
+        if (users[socket.id]) {
+            users[socket.id].bio = bio;
+            users[socket.id].interests = interests;
+            io.emit('update_user_list', Object.values(users));
+        }
+    });
 
-        if (!room.seatLocks[seatIndex]) {
-            // Unlocked Seat: Sit immediately
-            assignSeat(socket, seatIndex);
+    socket.on('admin_login', (pass) => {
+        if (pass === ADMIN_PASSWORD) {
+            if (users[socket.id]) users[socket.id].isAdmin = true;
+            socket.emit('admin_auth_res', { success: true });
         } else {
-            // Locked Seat: Send request to host/admin
-            io.emit('chat_message', { sender: 'System', text: `📩 ${user.name} ने सीट #${seatIndex + 1} पर बैठने के लिए रिक्वेस्ट भेजी है।` });
+            socket.emit('admin_auth_res', { success: false, msg: "गलत एडमिन पासवर्ड!" });
         }
     });
 
-    socket.on('approve_seat_request', ({ seatIndex, targetSocketId }) => {
-        const targetSocket = io.sockets.sockets.get(targetSocketId);
-        if (targetSocket) {
-            assignSeat(targetSocket, seatIndex);
-        }
+    // Join Room & Send Room Type Info
+    socket.on('join_room', (roomId) => {
+        if (!rooms[roomId]) return;
+        socket.join(roomId);
+        socket.currentRoom = roomId;
+        socket.emit('room_info', rooms[roomId]); // Send type: 'open_mic' or 'ptt'
+        socket.emit('update_seats', rooms[roomId].seats);
     });
 
-    function assignSeat(userSocket, seatIndex) {
-        const room = rooms["main-room"];
-        const user = userSocket.data.user || { name: 'User' };
+    // 10 Seats Management
+    socket.on('take_seat', ({ seatIndex }) => {
+        const roomId = socket.currentRoom;
+        if (!roomId || !rooms[roomId]) return;
+        let room = rooms[roomId];
 
-        // Clear existing seat
-        room.seats = room.seats.map(s => s?.id === userSocket.id ? null : s);
-        room.seats[seatIndex] = { id: userSocket.id, name: user.name, speaking: false, muted: false };
-
-        io.emit('update_seats', room.seats);
-    }
+        if (seatIndex >= 0 && seatIndex < 10 && !room.seats[seatIndex]) {
+            room.seats = room.seats.map(s => s && s.id === socket.id ? null : s);
+            room.seats[seatIndex] = {
+                id: socket.id,
+                name: users[socket.id].name,
+                isTalking: room.type === 'open_mic' ? true : false // Open mic is always active, PTT is off initially
+            };
+            io.to(roomId).emit('update_seats', room.seats);
+        }
+    });
 
     socket.on('leave_seat', () => {
-        const room = rooms["main-room"];
-        room.seats = room.seats.map(s => s?.id === socket.id ? null : s);
-        io.emit('update_seats', room.seats);
+        const roomId = socket.currentRoom;
+        if (!roomId || !rooms[roomId]) return;
+        rooms[roomId].seats = rooms[roomId].seats.map(s => s && s.id === socket.id ? null : s);
+        io.to(roomId).emit('update_seats', rooms[roomId].seats);
     });
 
-    // Push-To-Talk Events
-    socket.on('ptt_start', () => {
-        const room = rooms["main-room"];
-        room.seats.forEach(s => {
-            if (s && s.id === socket.id) s.speaking = true;
-        });
-        io.emit('update_seats', room.seats);
-    });
-
-    socket.on('ptt_stop', () => {
-        const room = rooms["main-room"];
-        room.seats.forEach(s => {
-            if (s && s.id === socket.id) s.speaking = false;
-        });
-        io.emit('update_seats', room.seats);
-    });
-
-    // Music Playback Control
-    socket.on('play_music', ({ trackName, trackUrl }) => {
-        rooms["main-room"].currentMusic = { trackName, trackUrl, playing: true };
-        io.emit('music_updated', rooms["main-room"].currentMusic);
-    });
-
-    // Admin Controls
-    socket.on('admin_action', ({ action, targetId, seatIndex }) => {
-        const room = rooms["main-room"];
-        if (action === 'kick_seat') {
-            if (seatIndex !== undefined) room.seats[seatIndex] = null;
-            io.emit('update_seats', room.seats);
-        } else if (action === 'kick_room') {
-            io.to(targetId).emit('kicked_from_app');
+    // PTT Talking Signals (Only for PTT Room)
+    socket.on('start_talking', () => {
+        const roomId = socket.currentRoom;
+        if (!roomId || !rooms[roomId] || rooms[roomId].type !== 'ptt') return;
+        let seat = rooms[roomId].seats.find(s => s && s.id === socket.id);
+        if (seat) {
+            seat.isTalking = true;
+            io.to(roomId).emit('update_seats', rooms[roomId].seats);
         }
     });
 
-    // Gifting System (#103 and special gifts)
-    socket.on('send_gift', ({ giftId, giftName, cost }) => {
-        const user = socket.data.user;
-        if (user && userWallets[user.name] && userWallets[user.name].coins >= cost) {
-            userWallets[user.name].coins -= cost;
-            socket.emit('wallet_update', userWallets[user.name]);
-            io.emit('gift_animation', {
-                sender: user.name,
-                giftId,
-                giftName,
-                message: `🎁 ${user.name} ने शानदार Gift ${giftName} (#${giftId}) भेजा!`
-            });
-        } else {
-            socket.emit('error_msg', 'पर्याप्त कॉइन्स नहीं हैं!');
+    socket.on('stop_talking', () => {
+        const roomId = socket.currentRoom;
+        if (!roomId || !rooms[roomId] || rooms[roomId].type !== 'ptt') return;
+        let seat = rooms[roomId].seats.find(s => s && s.id === socket.id);
+        if (seat) {
+            seat.isTalking = false;
+            io.to(roomId).emit('update_seats', rooms[roomId].seats);
         }
     });
 
-    socket.on('send_message', ({ receiver, text }) => {
-        const user = socket.data.user || { name: 'Guest' };
-        if (receiver) {
-            messageHistory[`${user.name}_${receiver}`] = true;
+    socket.on('admin_kick_seat', (seatIndex) => {
+        if (!users[socket.id] || !users[socket.id].isAdmin) return;
+        const roomId = socket.currentRoom;
+        if (roomId && rooms[roomId]) {
+            rooms[roomId].seats[seatIndex] = null;
+            io.to(roomId).emit('update_seats', rooms[roomId].seats);
         }
-        io.emit('chat_message', { sender: user.name, text });
     });
 
     socket.on('disconnect', () => {
-        const room = rooms["main-room"];
-        room.seats = room.seats.map(s => s?.id === socket.id ? null : s);
-        io.emit('update_seats', room.seats);
+        if (socket.currentRoom && rooms[socket.currentRoom]) {
+            rooms[socket.currentRoom].seats = rooms[socket.currentRoom].seats.map(s => s && s.id === socket.id ? null : s);
+            io.to(socket.currentRoom).emit('update_seats', rooms[socket.currentRoom].seats);
+        }
+        delete users[socket.id];
+        io.emit('update_user_list', Object.values(users));
     });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`ChitChat Advanced Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
