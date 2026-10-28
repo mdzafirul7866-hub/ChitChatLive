@@ -10,65 +10,41 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-const otpStore = {};
 const users = {}; 
-
-// Two Different Room Types
 const rooms = {
-    "family_room": { 
-        id: "family_room", 
-        title: "📞 Family Group (10 Seats Open Call)", 
-        type: "open_mic", // Open mic, no PTT needed
-        seats: Array(10).fill(null) 
-    },
-    "ptt_room": { 
-        id: "ptt_room", 
-        title: "🔥 Pange & Live Room (15s PTT)", 
-        type: "ptt", // Requires holding 15s mic
-        seats: Array(10).fill(null) 
-    }
+    "room_1": { id: "room_1", title: "VIP Party Room 103", type: "ptt", seats: Array(10).fill(null), owner: "Admin" },
+    "room_2": { id: "room_2", title: "Family Open Lounge", type: "open_mic", seats: Array(10).fill(null), owner: "Admin" }
+};
+
+// Gift Catalog (VoxaParty Style)
+const GIFTS = {
+    "rose": { name: "Rose", cost: 10, icon: "🌹" },
+    "car": { name: "Sports Car", cost: 500, icon: "🏎️" },
+    "rocket": { name: "Rocket", cost: 2000, icon: "🚀" },
+    "crown": { name: "VIP Crown", cost: 5000, icon: "👑" }
 };
 
 const ADMIN_PASSWORD = "admin123password";
 
-// OTP APIs
-app.post('/api/send-otp', (req, res) => {
-    const { phone } = req.body;
-    if (!phone) return res.status(400).json({ success: false, msg: "मोबाइल नंबर दर्ज करें!" });
-    otpStore[phone] = "1234";
-    res.json({ success: true, msg: "OTP भेज दिया गया है (Demo OTP: 1234)" });
-});
-
-app.post('/api/verify-otp', (req, res) => {
-    const { phone, otp } = req.body;
-    if (otpStore[phone] && otpStore[phone] === otp) {
-        delete otpStore[phone];
-        return res.json({ success: true, phone });
-    }
-    res.status(400).json({ success: false, msg: "गलत OTP दर्ज किया है!" });
+// Mock Auth & Session
+app.post('/api/login', (req, res) => {
+    const { phone, username, bio, vipLevel, frame } = req.body;
+    if (!phone) return res.status(400).json({ success: false, msg: "नंबर दर्ज करें!" });
+    res.json({ 
+        success: true, 
+        user: { phone, name: username || 'User_' + phone.slice(-4), bio: bio || "Hey!", vipLevel: vipLevel || 1, frame: frame || "frame_gold", coins: 10000 } 
+    });
 });
 
 io.on('connection', (socket) => {
 
-    socket.on('auth_login', ({ phone, username, bio, interests }) => {
+    socket.on('join_app', (userData) => {
         users[socket.id] = {
             id: socket.id,
-            phone,
-            name: username || 'User_' + phone.slice(-4),
-            bio: bio || "Hey there!",
-            interests: interests || "Chat",
+            ...userData,
             isAdmin: false
         };
-        socket.emit('auth_success', users[socket.id]);
         io.emit('update_user_list', Object.values(users));
-    });
-
-    socket.on('update_profile', ({ bio, interests }) => {
-        if (users[socket.id]) {
-            users[socket.id].bio = bio;
-            users[socket.id].interests = interests;
-            io.emit('update_user_list', Object.values(users));
-        }
     });
 
     socket.on('admin_login', (pass) => {
@@ -80,16 +56,15 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Join Room & Send Room Type Info
+    // Room & Seats
     socket.on('join_room', (roomId) => {
         if (!rooms[roomId]) return;
         socket.join(roomId);
         socket.currentRoom = roomId;
-        socket.emit('room_info', rooms[roomId]); // Send type: 'open_mic' or 'ptt'
+        socket.emit('room_info', rooms[roomId]);
         socket.emit('update_seats', rooms[roomId].seats);
     });
 
-    // 10 Seats Management
     socket.on('take_seat', ({ seatIndex }) => {
         const roomId = socket.currentRoom;
         if (!roomId || !rooms[roomId]) return;
@@ -100,7 +75,9 @@ io.on('connection', (socket) => {
             room.seats[seatIndex] = {
                 id: socket.id,
                 name: users[socket.id].name,
-                isTalking: room.type === 'open_mic' ? true : false // Open mic is always active, PTT is off initially
+                vipLevel: users[socket.id].vipLevel,
+                frame: users[socket.id].frame,
+                isTalking: room.type === 'open_mic' ? true : false
             };
             io.to(roomId).emit('update_seats', room.seats);
         }
@@ -113,24 +90,49 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('update_seats', rooms[roomId].seats);
     });
 
-    // PTT Talking Signals (Only for PTT Room)
+    // PTT Talking Signals
     socket.on('start_talking', () => {
         const roomId = socket.currentRoom;
         if (!roomId || !rooms[roomId] || rooms[roomId].type !== 'ptt') return;
         let seat = rooms[roomId].seats.find(s => s && s.id === socket.id);
-        if (seat) {
-            seat.isTalking = true;
-            io.to(roomId).emit('update_seats', rooms[roomId].seats);
-        }
+        if (seat) { seat.isTalking = true; io.to(roomId).emit('update_seats', rooms[roomId].seats); }
     });
 
     socket.on('stop_talking', () => {
         const roomId = socket.currentRoom;
         if (!roomId || !rooms[roomId] || rooms[roomId].type !== 'ptt') return;
         let seat = rooms[roomId].seats.find(s => s && s.id === socket.id);
-        if (seat) {
-            seat.isTalking = false;
-            io.to(roomId).emit('update_seats', rooms[roomId].seats);
+        if (seat) { seat.isTalking = false; io.to(roomId).emit('update_seats', rooms[roomId].seats); }
+    });
+
+    // Virtual Gifting System
+    socket.on('send_gift', ({ giftKey }) => {
+        const roomId = socket.currentRoom;
+        const sender = users[socket.id];
+        const gift = GIFTS[giftKey];
+
+        if (!roomId || !sender || !gift) return;
+        if (sender.coins < gift.cost) return socket.emit('error_msg', 'पर्याप्त कॉइन्स नहीं हैं!');
+
+        sender.coins -= gift.cost;
+        socket.emit('update_wallet', sender.coins);
+
+        io.to(roomId).emit('gift_animation', {
+            senderName: sender.name,
+            gift
+        });
+    });
+
+    // Live Chat with Bubbles
+    socket.on('send_chat', (msg) => {
+        const roomId = socket.currentRoom;
+        const user = users[socket.id];
+        if (roomId && user) {
+            io.to(roomId).emit('new_chat', {
+                sender: user.name,
+                vipLevel: user.vipLevel,
+                msg
+            });
         }
     });
 
