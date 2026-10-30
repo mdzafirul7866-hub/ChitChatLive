@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChitChat App</title>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -12,138 +13,36 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             padding-bottom: 70px;
         }
-        .header-top {
-            padding: 16px;
-            font-size: 11px;
-            letter-spacing: 1px;
-            color: #94a3b8;
-            text-transform: uppercase;
-        }
-        .app-title {
-            font-size: 28px;
-            font-weight: 800;
-            margin-top: 4px;
-            color: #fff;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .live-badge {
-            background: #052e16;
-            color: #22c55e;
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            border: 1px solid #15803d;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+        .header-top { padding: 16px; font-size: 11px; letter-spacing: 1px; color: #94a3b8; text-transform: uppercase; }
+        .app-title { font-size: 28px; font-weight: 800; margin-top: 4px; color: #fff; display: flex; justify-content: space-between; align-items: center; }
+        .live-badge { background: #052e16; color: #22c55e; font-size: 12px; padding: 4px 10px; border-radius: 20px; border: 1px solid #15803d; display: flex; align-items: center; gap: 5px; }
         .live-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; }
-        
         .container { padding: 0 16px; }
 
-        /* Banner */
-        .hero-card {
-            background: linear-gradient(135deg, #1c1410 0%, #17110e 100%);
-            border: 1px solid #ff550044;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+        .hero-card { background: linear-gradient(135deg, #1c1410 0%, #17110e 100%); border: 1px solid #ff550044; border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
         .hero-left { display: flex; align-items: center; gap: 15px; }
-        .wave-icon {
-            width: 50px;
-            height: 50px;
-            background: #1a1b26;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-        }
+        .wave-icon { width: 50px; height: 50px; background: #1a1b26; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
         .hero-text h3 { font-size: 18px; color: #fff; font-weight: 700; margin-bottom: 4px; }
         .hero-text p { font-size: 12px; color: #94a3b8; line-height: 1.4; }
-        .plus-btn {
-            background: #ff5500;
-            color: white;
-            border: none;
-            width: 46px;
-            height: 46px;
-            border-radius: 14px;
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        .plus-btn { background: #ff5500; color: white; border: none; width: 46px; height: 46px; border-radius: 14px; font-size: 24px; font-weight: bold; cursor: pointer; }
 
-        /* Tabs */
         .filter-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
-        .tab {
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            background: #1e2230;
-            color: #94a3b8;
-            border: none;
-            cursor: pointer;
-        }
+        .tab { padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; background: #1e2230; color: #94a3b8; border: none; cursor: pointer; }
         .tab.active { background: #ff5500; color: #fff; }
 
-        /* Empty State */
-        .empty-box {
-            background: #141722;
-            border: 1px solid #1e2230;
-            border-radius: 20px;
-            padding: 40px 20px;
-            text-align: center;
-            margin-top: 10px;
-        }
+        .empty-box { background: #141722; border: 1px solid #1e2230; border-radius: 20px; padding: 40px 20px; text-align: center; margin-top: 10px; }
         .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.8; }
         .empty-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
         .empty-sub { font-size: 13px; color: #94a3b8; margin-bottom: 20px; }
-        .orange-outline-btn {
-            background: transparent;
-            border: 1px solid #ff5500;
-            color: #ff5500;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-        }
+        .orange-outline-btn { background: transparent; border: 1px solid #ff5500; color: #ff5500; padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 14px; cursor: pointer; }
 
-        /* Profile Styles */
         .profile-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-        .avatar-box {
-            width: 65px;
-            height: 65px;
-            background: #ff5500;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            font-weight: bold;
-            color: white;
-        }
+        .avatar-box { width: 65px; height: 65px; background: #ff5500; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; color: white; }
         .profile-name { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
         .verified-badge { color: #ff5500; font-size: 16px; }
         .profile-id { font-size: 12px; color: #64748b; margin-top: 2px; }
 
-        .wallet-card {
-            background: linear-gradient(135deg, #1c1410 0%, #17110e 100%);
-            border: 1px solid #ff550044;
-            border-radius: 20px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
+        .wallet-card { background: linear-gradient(135deg, #1c1410 0%, #17110e 100%); border: 1px solid #ff550044; border-radius: 20px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
         .wallet-sub { font-size: 10px; letter-spacing: 1px; color: #ff5500; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; }
         .wallet-amount { font-size: 28px; font-weight: 900; }
         .wallet-amount span { font-size: 14px; font-weight: 500; color: #94a3b8; }
@@ -152,101 +51,21 @@
         .section-label { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
         .section-desc { font-size: 12px; color: #64748b; margin-bottom: 14px; }
 
-        .call-buttons { display: flex; gap: 12px; margin-bottom: 24px; }
-        .btn-call {
-            flex: 1;
-            padding: 14px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 700;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .btn-audio { background: #10b981; }
-        .btn-video { background: #3b82f6; }
+        .input-box { width: 100%; background: #141722; border: 1px solid #1e2230; padding: 14px; border-radius: 12px; color: white; font-size: 14px; margin-bottom: 16px; outline: none; }
 
-        .input-box {
-            width: 100%;
-            background: #141722;
-            border: 1px solid #1e2230;
-            padding: 14px;
-            border-radius: 12px;
-            color: white;
-            font-size: 14px;
-            margin-bottom: 16px;
-            outline: none;
-        }
+        .orange-btn-full { width: 100%; background: #ff5500; color: white; border: none; padding: 16px; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; }
 
-        .gender-options { display: flex; gap: 10px; margin-bottom: 24px; }
-        .gender-btn {
-            padding: 10px 18px;
-            background: #141722;
-            border: 1px solid #1e2230;
-            border-radius: 20px;
-            color: #94a3b8;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .gender-btn.active { background: #ff550022; border-color: #ff5500; color: #ff5500; }
-
-        .orange-btn-full {
-            width: 100%;
-            background: #ff5500;
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 15px;
-            cursor: pointer;
-        }
-
-        /* Admin Tag */
-        .ui-tag {
-            background: #ff550022;
-            color: #ff5500;
-            border: 1px solid #ff550044;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 10px;
-            font-weight: 800;
-        }
-
-        /* Bottom Nav */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #0d0f17;
-            border-top: 1px solid #1e2230;
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0 12px 0;
-            background: rgba(13, 15, 23, 0.95);
-            backdrop-filter: blur(10px);
-        }
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            color: #64748b;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-        }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(13, 15, 23, 0.95); border-top: 1px solid #1e2230; display: flex; justify-content: space-around; padding: 10px 0 12px 0; backdrop-filter: blur(10px); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #64748b; font-size: 11px; font-weight: 600; cursor: pointer; }
         .nav-item.active { color: #ff5500; }
         .nav-icon { font-size: 18px; }
 
         .hidden { display: none !important; }
+
+        /* Voice Stage Modal */
+        .stage-box { background: #141722; border: 1px solid #ff5500; border-radius: 20px; padding: 20px; text-align: center; margin-top: 20px; }
+        .mic-btn { background: #22c55e; color: white; border: none; padding: 15px 30px; font-size: 16px; font-weight: bold; border-radius: 30px; margin-top: 15px; cursor: pointer; }
+        .mic-btn.muted { background: #ef4444; }
     </style>
 </head>
 <body>
@@ -272,17 +91,12 @@
             <button class="plus-btn" onclick="createNewRoom()">+</button>
         </div>
 
-        <div class="filter-tabs">
-            <button class="tab active">All rooms</button>
-            <button class="tab">10-seat</button>
-            <button class="tab">15-sec PTT</button>
-        </div>
-
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <h4 style="font-size: 16px;">Happening now</h4>
             <span style="font-size: 12px; color: #64748b;" id="room-count-label">0 rooms</span>
         </div>
 
+        <!-- ACTIVE ROOMS / VOICE STAGE -->
         <div id="rooms-list-container">
             <div class="empty-box">
                 <div class="empty-icon">📡</div>
@@ -292,9 +106,13 @@
             </div>
         </div>
 
-        <p style="text-align: center; color: #475569; font-size: 11px; margin-top: 30px;">
-            Real-time audio uses your device microphone permission.
-        </p>
+        <!-- VOICE CALL STAGE (HIDDEN UNTIL JOINED) -->
+        <div id="voice-stage" class="stage-box hidden">
+            <h3 id="current-room-title">Voice Room</h3>
+            <p style="color: #22c55e; margin-top: 5px;">🎙️ Real-time Audio Connected</p>
+            <button id="mic-toggle-btn" class="mic-btn" onclick="toggleMic()">🎤 Mic ON</button>
+            <audio id="remote-audio" autoplay></audio>
+        </div>
     </div>
 
     <!-- PROFILE VIEW -->
@@ -305,7 +123,7 @@
                 <div class="avatar-box" id="avatar-initials">GV</div>
                 <div>
                     <div class="profile-name"><span id="profile-display-title">Guest 8221</span> <span class="verified-badge">✔</span></div>
-                    <div class="profile-id" id="profile-display-id">9135658221</div>
+                    <div class="profile-id">9135658221</div>
                 </div>
             </div>
         </div>
@@ -313,57 +131,15 @@
         <div class="wallet-card">
             <div>
                 <div class="wallet-sub">WALLET BALANCE</div>
-                <div class="wallet-amount"><span id="coin-balance">3,500</span> <span>coins</span></div>
+                <div class="wallet-amount"><span>3,500</span> <span>coins</span></div>
             </div>
             <div class="wallet-icon">👛</div>
         </div>
 
-        <div class="section-label">Quick calls</div>
-        <div class="section-desc">WebRTC call entry points for a live contact room.</div>
-
-        <div class="call-buttons">
-            <button class="btn-call btn-audio" onclick="alert('Starting WebRTC Audio Call...')">📞 Audio call</button>
-            <button class="btn-call btn-video" onclick="alert('Starting WebRTC Video Call...')">📹 Video call</button>
-        </div>
-
         <div class="section-label">Profile details</div>
-        
         <label style="font-size: 12px; color: #94a3b8; display: block; margin: 10px 0 6px 0;">Display name</label>
         <input type="text" class="input-box" id="input-display-name" value="Guest 8221">
-
-        <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 8px;">Gender</label>
-        <div class="gender-options">
-            <button class="gender-btn" onclick="selectGender(this)">Female</button>
-            <button class="gender-btn" onclick="selectGender(this)">Male</button>
-            <button class="gender-btn active" onclick="selectGender(this)">Prefer not to say</button>
-        </div>
-
         <button class="orange-btn-full" onclick="saveProfileChanges()">Save profile →</button>
-    </div>
-
-    <!-- ADMIN VIEW -->
-    <div id="view-admin" class="container hidden">
-        <div class="header-top">
-            CONTROL CENTER
-            <div class="app-title">
-                Admin panel
-                <span class="ui-tag">🔒 UI ONLY</span>
-            </div>
-        </div>
-
-        <div class="empty-box" style="text-align: left; background: #141722; padding: 16px; border-radius: 14px; margin-bottom: 20px;">
-            <div style="display: flex; gap: 10px; color: #38bdf8; font-size: 13px;">
-                <span>ℹ️</span>
-                <span>Password login is reserved for the next admin release. Room hosts can moderate seats here for now.</span>
-            </div>
-        </div>
-
-        <div class="section-label">Your hosted rooms</div>
-
-        <div class="empty-box" style="margin-top: 15px;">
-            <div class="empty-title">Create a room first</div>
-            <div class="empty-sub">Your room controls will appear here.</div>
-        </div>
     </div>
 
     <!-- BOTTOM NAVIGATION -->
@@ -376,73 +152,135 @@
             <div class="nav-icon">👤</div>
             <div>Profile</div>
         </div>
-        <div class="nav-item" id="nav-admin" onclick="switchTab('admin')">
-            <div class="nav-icon">👑</div>
-            <div>Admin</div>
-        </div>
     </div>
 
     <script>
-        function switchTab(tabName) {
-            // Hide all views
-            document.getElementById('view-home').classList.add('hidden');
-            document.getElementById('view-profile').classList.add('hidden');
-            document.getElementById('view-admin').classList.add('hidden');
+        const socket = io();
+        let localStream = null;
+        let peerConnection = null;
+        let isMuted = false;
 
-            // Reset active nav items
-            document.getElementById('nav-home').classList.remove('active');
-            document.getElementById('nav-profile').classList.remove('active');
-            document.getElementById('nav-admin').classList.remove('active');
+        const rtcConfig = {
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        };
 
-            // Show selected view
-            if(tabName === 'home') {
-                document.getElementById('view-home').classList.remove('hidden');
-                document.getElementById('nav-home').classList.add('active');
-            } else if(tabName === 'profile') {
-                document.getElementById('view-profile').classList.remove('hidden');
-                document.getElementById('nav-profile').classList.add('active');
-            } else if(tabName === 'admin') {
-                document.getElementById('view-admin').classList.remove('hidden');
-                document.getElementById('nav-admin').classList.add('active');
+        socket.on('update-rooms', (rooms) => {
+            const container = document.getElementById('rooms-list-container');
+            document.getElementById('room-count-label').innerText = rooms.length + " rooms";
+            
+            if(rooms.length === 0) return;
+
+            container.innerHTML = '';
+            rooms.forEach(r => {
+                container.innerHTML += `
+                    <div class="hero-card" style="border-color: #ff5500;">
+                        <div>
+                            <h3>${r.name}</h3>
+                            <p style="color:#22c55e;">● Live Voice Room</p>
+                        </div>
+                        <button class="orange-outline-btn" style="padding: 8px 16px;" onclick="joinRoom('${r.id}', '${r.name}')">Join Voice</button>
+                    </div>
+                `;
+            });
+        });
+
+        function createNewRoom() {
+            let rName = prompt("Enter Room Name:", "ChitChat Lounge");
+            if(rName) {
+                socket.emit('create-room', rName);
             }
         }
 
-        function selectGender(element) {
-            let btns = document.querySelectorAll('.gender-btn');
-            btns.forEach(b => b.classList.remove('active'));
-            element.classList.add('active');
+        async function joinRoom(roomId, roomName) {
+            document.getElementById('rooms-list-container').classList.add('hidden');
+            document.getElementById('voice-stage').classList.remove('hidden');
+            document.getElementById('current-room-title').innerText = roomName;
+
+            // Request Microphone Access
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                socket.emit('join-room', roomId);
+                setupWebRTC(roomId);
+            } catch (err) {
+                alert("Microphone permission allowed nahi hai!");
+            }
+        }
+
+        function setupWebRTC(roomId) {
+            peerConnection = new RTCPeerConnection(rtcConfig);
+
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+
+            peerConnection.ontrack = (event) => {
+                document.getElementById('remote-audio').srcObject = event.streams[0];
+            };
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('ice-candidate', { candidate: event.candidate, target: roomId });
+                }
+            };
+
+            socket.on('user-joined', async (userId) => {
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                socket.emit('offer', { signal: offer, target: userId });
+            });
+
+            socket.on('offer', async (data) => {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                socket.emit('answer', { signal: answer, target: data.sender });
+            });
+
+            socket.on('answer', async (data) => {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.signal));
+            });
+
+            socket.on('ice-candidate', async (data) => {
+                if (data.candidate) {
+                    await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                }
+            });
+        }
+
+        function toggleMic() {
+            if (localStream) {
+                isMuted = !isMuted;
+                localStream.getAudioTracks()[0].enabled = !isMuted;
+                const btn = document.getElementById('mic-toggle-btn');
+                if (isMuted) {
+                    btn.innerText = "🔇 Muted";
+                    btn.classList.add('muted');
+                } else {
+                    btn.innerText = "🎤 Mic ON";
+                    btn.classList.remove('muted');
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-profile').classList.add('hidden');
+            document.getElementById('nav-home').classList.remove('active');
+            document.getElementById('nav-profile').classList.remove('active');
+
+            if(tab === 'home') {
+                document.getElementById('view-home').classList.remove('hidden');
+                document.getElementById('nav-home').classList.add('active');
+            } else {
+                document.getElementById('view-profile').classList.remove('hidden');
+                document.getElementById('nav-profile').classList.add('active');
+            }
         }
 
         function saveProfileChanges() {
-            let newName = document.getElementById('input-display-name').value;
-            if(!newName) return alert('Please enter a display name');
-            
-            document.getElementById('profile-display-title').innerText = newName;
-            
-            // Get initials for avatar
-            let words = newName.trim().split(" ");
-            let initials = words[0][0].toUpperCase();
-            if(words.length > 1) initials += words[1][0].toUpperCase();
-            document.getElementById('avatar-initials').innerText = initials;
-
-            alert('Profile saved successfully!');
-        }
-
-        function createNewRoom() {
-            let rName = prompt("Enter Room Name:", "My Voice Lounge");
-            if(rName) {
-                let container = document.getElementById('rooms-list-container');
-                container.innerHTML = `
-                    <div class="hero-card" style="border-color: #ff5500;">
-                        <div>
-                            <h3>${rName}</h3>
-                            <p style="color:#22c55e;">● 1 Active Speaker (10-Seat Stage)</p>
-                        </div>
-                        <button class="orange-outline-btn" style="padding: 8px 16px;" onclick="alert('Joining Voice Room...')">Join</button>
-                    </div>
-                `;
-                document.getElementById('room-count-label').innerText = "1 room";
-            }
+            let name = document.getElementById('input-display-name').value;
+            document.getElementById('profile-display-title').innerText = name;
+            alert("Profile Updated!");
         }
     </script>
 </body>
