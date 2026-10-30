@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChitChat Live - VIP Edition</title>
+    <title>ChitChat Live - Final Party Room</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         body { background: #0b0b16; color: #fff; display: flex; justify-content: center; }
@@ -23,11 +23,9 @@
         .p-15 { padding: 15px; }
         .card { background: #222238; padding: 15px; border-radius: 12px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ffd700; }
 
-        /* VIP Avatar Frame Effect */
         .avatar-frame { width: 50px; height: 50px; border-radius: 50%; border: 3px solid #ffd700; display: flex; align-items: center; justify-content: center; background: #333; position: relative; font-weight: bold; }
         .vip-badge { position: absolute; bottom: -4px; right: -4px; background: #ff4081; font-size: 9px; padding: 2px 5px; border-radius: 10px; color: #fff; }
 
-        /* Chat Bubbles Style */
         .chat-bubble { background: linear-gradient(135deg, #6200ea, #b388ff); padding: 8px 12px; border-radius: 15px; margin: 4px 0; font-size: 13px; max-width: 80%; }
 
         .seats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 15px; }
@@ -38,7 +36,6 @@
         .ptt-container { text-align: center; padding: 10px; display: none; }
         .ptt-btn { width: 80px; height: 80px; border-radius: 50%; border: none; background: #e91e63; color: white; font-weight: bold; cursor: pointer; user-select: none; }
 
-        /* Gift Animation Popup */
         .gift-popup { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); font-size: 70px; display: none; animation: popAnim 1.5s ease-out forwards; z-index: 300; pointer-events: none; }
         @keyframes popAnim { 0% { opacity:0; transform:translate(-50%,-50%) scale(0.3); } 50% { opacity:1; transform:translate(-50%,-50%) scale(1.3); } 100% { opacity:0; transform:translate(-50%,-50%) scale(1); } }
 
@@ -49,71 +46,67 @@
 
 <div class="app-container">
 
-    <!-- LOGIN SCREEN (Auto-saved session, no repeated OTP) -->
+    <!-- LOGIN SCREEN -->
     <div class="login-box" id="loginScreen">
-        <h2>🚀 ChitChat Live - VIP Login</h2>
-        <input type="text" id="phoneInput" class="input-field" placeholder="मोबाइल नंबर">
-        <input type="text" id="usernameInput" class="input-field" placeholder="आपका नाम">
+        <h2>🚀 ChitChat Live - Final</h2>
+        <input type="text" id="phoneInput" class="input-field" placeholder="Mobile Number">
+        <input type="text" id="usernameInput" class="input-field" placeholder="Your Name">
         <select id="vipSelect" class="input-field">
-            <option value="1">VIP Level 1 (Bronze)</option>
-            <option value="2">VIP Level 2 (Silver)</option>
-            <option value="3">VIP Level 3 (Gold)</option>
+            <option value="1">VIP Level 1</option>
+            <option value="3">VIP Level 3</option>
             <option value="5" selected>VIP Level 5 (Royal King 👑)</option>
         </select>
-        <button class="btn" onclick="loginApp()">ऐप में प्रवेश करें</button>
+        <button class="btn" onclick="loginApp()">App Mein Pravesh Karein</button>
     </div>
 
-    <!-- 1. HOME SCREEN -->
+    <!-- HOME SCREEN -->
     <div class="screen active" id="screenHome">
         <div class="p-15">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3>🏠 होम - लाइव रूम्स</h3>
+                <h3>🏠 Live Party Rooms</h3>
                 <div style="font-size:13px; color:#ffd700;">🪙 <span id="walletCoins">10000</span></div>
             </div>
-            <div style="margin-top: 15px;">
-                <div class="card" onclick="joinRoom('room_1')">
-                    <h4>🔥 VIP PTT Party Room 103</h4>
-                    <p style="font-size:11px; color:#aaa;">15s होल्ड माइक सिस्टम | वीआईपी रूम</p>
-                </div>
-                <div class="card" onclick="joinRoom('room_2')">
-                    <h4>📞 Family Open Lounge</h4>
-                    <p style="font-size:11px; color:#aaa;">नॉर्मल ओपन कॉल (10 सीट्स)</p>
-                </div>
+
+            <!-- Create Room Option (Video Feature) -->
+            <div style="margin: 15px 0; background: #222238; padding: 12px; border-radius: 8px;">
+                <input type="text" id="newRoomTitleInput" class="input-field" placeholder="Naya Room Title Likhein...">
+                <button class="btn" style="background:#00e676;" onclick="createNewRoom()">+ Apna Room Banayein</button>
+            </div>
+
+            <div style="margin-top: 15px;" id="roomListContainer">
+                <!-- Rooms will load here dynamically -->
             </div>
         </div>
     </div>
 
-    <!-- 2. ACTIVE ROOM SCREEN -->
+    <!-- ACTIVE ROOM SCREEN -->
     <div class="screen" id="screenRoom">
         <div class="p-15" style="display:flex; justify-content:space-between; align-items:center; background:#1e1e38;">
             <h4 id="roomHeaderTitle">Room</h4>
             <div>
                 <button onclick="openAdmin()" style="background:#ff9800; border:none; padding:5px 8px; border-radius:5px; color:#fff; cursor:pointer;">Admin</button>
-                <button onclick="switchScreen('screenHome')" style="background:#ff5252; border:none; padding:5px 8px; border-radius:5px; color:#fff; cursor:pointer;">Exit</button>
+                <!-- Exit Room -> Goes back to Home screen safely as requested in video -->
+                <button onclick="exitRoomToHome()" style="background:#ff5252; border:none; padding:5px 8px; border-radius:5px; color:#fff; cursor:pointer;">Exit Room</button>
             </div>
         </div>
 
-        <!-- 10 Seats -->
         <div class="seats-grid" id="seatsGrid"></div>
 
-        <!-- PTT Button -->
         <div class="ptt-container" id="pttContainer">
             <button class="ptt-btn" id="pttBtn">HOLD<br>(15s)</button>
-            <p id="timerTxt" style="font-size:11px; color:#ffeb3b; margin-top:5px;">माइक होल्ड करें</p>
+            <p id="timerTxt" style="font-size:11px; color:#ffeb3b; margin-top:5px;">15s Hold Mic (Fast & Smooth)</p>
         </div>
 
-        <!-- Live Chat Box with Bubbles -->
         <div style="flex:1; background:#12121c; padding:10px; overflow-y:auto;" id="chatBox"></div>
 
-        <!-- Controls & Gift Drawer -->
         <div style="padding:10px; background:#1e1e38; display:flex; gap:5px;">
-            <input type="text" id="chatInput" class="input-field" style="margin:0;" placeholder="चैट करें...">
+            <input type="text" id="chatInput" class="input-field" style="margin:0;" placeholder="Chat karein...">
             <button onclick="sendChat()" style="background:#00e676; border:none; padding:8px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">Send</button>
-            <button onclick="sendGift('rocket')" style="background:#ff4081; border:none; padding:8px 10px; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer;">🎁 गिफ्ट</button>
+            <button onclick="sendGift('rocket')" style="background:#ff4081; border:none; padding:8px 10px; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer;">🎁 Gift</button>
         </div>
     </div>
 
-    <!-- 3. PROFILE SCREEN -->
+    <!-- PROFILE SCREEN -->
     <div class="screen" id="screenProfile">
         <div class="p-15" style="text-align:center;">
             <div style="width:70px; height:70px; border-radius:50%; border:3px solid #ffd700; margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:24px;" id="profileAvatar">👑</div>
@@ -122,22 +115,21 @@
         </div>
     </div>
 
-    <!-- GIFT POPUP ANIMATION -->
     <div class="gift-popup" id="giftPopup">🚀</div>
 
-    <!-- ADMIN MODAL -->
     <div class="admin-modal" id="adminModal">
         <h3>Admin Access Panel</h3>
-        <input type="password" id="adminPassInput" class="input-field" placeholder="पासवर्ड">
-        <button class="btn" onclick="loginAdmin()">लॉगिन</button>
-        <button class="btn" style="background:#555; color:#fff;" onclick="closeAdmin()">बंद करें</button>
-        <div id="adminStatus" style="margin-top:10px; color:#00e676; display:none;">एडमिन एक्टिव! सीट पर क्लिक करके किक करें।</div>
+        <input type="password" id="adminPassInput" class="input-field" placeholder="Password">
+        <button class="btn" onclick="loginAdmin()">Login</button>
+        <button class="btn" style="background:#555; color:#fff;" onclick="closeAdmin()">Band Karein</button>
+        <div id="adminStatus" style="margin-top:10px; color:#00e676; display:none;">Admin Active! Seat par click karke kick karein.</div>
     </div>
 
-    <!-- BOTTOM NAVIGATION -->
+    <div id="audioContainer" style="display:none;"></div>
+
     <div class="nav-bar">
-        <button class="nav-item active" onclick="switchTab('screenHome', this)">🏠 होम</button>
-        <button class="nav-item" onclick="switchTab('screenProfile', this)">👑 प्रोफाइल</button>
+        <button class="nav-item active" onclick="switchTab('screenHome', this)">🏠 Home</button>
+        <button class="nav-item" onclick="switchTab('screenProfile', this)">👑 Profile</button>
     </div>
 
 </div>
@@ -152,7 +144,10 @@
     let isHoldingMic = false;
     let isAdminLoggedIn = false;
 
-    // Check Local Storage Session (No repeated OTP)
+    let localStream = null;
+    let peerConnections = {};
+    const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+
     window.onload = () => {
         const saved = localStorage.getItem('chitchat_user');
         if (saved) {
@@ -165,7 +160,7 @@
         const phone = document.getElementById('phoneInput').value;
         const username = document.getElementById('usernameInput').value;
         const vipLevel = document.getElementById('vipSelect').value;
-        if (!phone) return alert("नंबर डालें!");
+        if (!phone) return alert("Number daalein!");
 
         const res = await fetch('/api/login', {
             method: 'POST',
@@ -188,6 +183,65 @@
         document.getElementById('walletCoins').innerText = localUser.coins;
     }
 
+    async function initMicrophone() {
+        try {
+            if (!localStream) {
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                localStream.getAudioTracks()[0].enabled = false;
+            }
+        } catch (e) {
+            console.log("Mic Error: ", e);
+        }
+    }
+
+    function createPeerConnection(targetId) {
+        if (peerConnections[targetId]) return peerConnections[targetId];
+
+        const pc = new RTCPeerConnection(rtcConfig);
+        peerConnections[targetId] = pc;
+
+        if (localStream) {
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+        }
+
+        pc.ontrack = (event) => {
+            let audioEl = document.getElementById(`audio_${targetId}`);
+            if (!audioEl) {
+                audioEl = document.createElement('audio');
+                audioEl.id = `audio_${targetId}`;
+                audioEl.autoplay = true;
+                document.getElementById('audioContainer').appendChild(audioEl);
+            }
+            audioEl.srcObject = event.streams[0];
+        };
+
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit('webrtc_ice', { targetId, candidate: event.candidate });
+            }
+        };
+
+        return pc;
+    }
+
+    socket.on('webrtc_offer', async ({ senderId, offer }) => {
+        const pc = createPeerConnection(senderId);
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('webrtc_answer', { targetId: senderId, answer });
+    });
+
+    socket.on('webrtc_answer', async ({ senderId, answer }) => {
+        const pc = peerConnections[senderId];
+        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on('webrtc_ice', async ({ senderId, candidate }) => {
+        const pc = peerConnections[senderId];
+        if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    });
+
     function switchTab(screenId, btn) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -200,9 +254,40 @@
         document.getElementById(screenId).classList.add('active');
     }
 
-    function joinRoom(roomId) {
+    // Room creation triggered from UI
+    function createNewRoom() {
+        const title = document.getElementById('newRoomTitleInput').value;
+        if(!title) return alert("Room ka title likhein!");
+        socket.emit('create_room', { roomTitle: title, roomType: 'ptt' });
+        document.getElementById('newRoomTitleInput').value = '';
+    }
+
+    socket.on('room_list_update', (rooms) => {
+        const container = document.getElementById('roomListContainer');
+        container.innerHTML = '';
+        rooms.forEach(room => {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.onclick = () => joinRoom(room.id);
+            div.innerHTML = `
+                <h4>🔥 ${room.title}</h4>
+                <p style="font-size:11px; color:#aaa;">Owner: ${room.owner} | Type: ${room.type.toUpperCase()}</p>
+            `;
+            container.appendChild(div);
+        });
+    });
+
+    async function joinRoom(roomId) {
+        await initMicrophone();
         socket.emit('join_room', roomId);
         switchScreen('screenRoom');
+    }
+
+    // Exit room safely returns to Home screen (as requested in video)
+    function exitRoomToHome() {
+        socket.emit('leave_seat');
+        if (localStream) localStream.getAudioTracks()[0].enabled = false;
+        switchScreen('screenHome');
     }
 
     socket.on('room_info', (room) => {
@@ -217,10 +302,22 @@
         seats.forEach((seat, idx) => {
             const el = document.createElement('div');
             el.className = `seat ${seat ? 'occupied' : ''} ${seat && seat.isTalking ? 'talking' : ''}`;
-            el.onclick = () => {
-                if (isAdminLoggedIn) socket.emit('admin_kick_seat', idx);
-                else seat ? socket.emit('leave_seat') : socket.emit('take_seat', {seatIndex: idx});
+            el.onclick = async () => {
+                if (isAdminLoggedIn) {
+                    socket.emit('admin_kick_seat', idx);
+                } else {
+                    if (seat) {
+                        socket.emit('leave_seat');
+                        if (localStream) localStream.getAudioTracks()[0].enabled = false;
+                    } else {
+                        socket.emit('take_seat', {seatIndex: idx});
+                        if (localStream && currentRoomType === 'open_mic') {
+                            localStream.getAudioTracks()[0].enabled = true;
+                        }
+                    }
+                }
             };
+
             el.innerHTML = `
                 <div class="avatar-frame">
                     ${seat ? seat.name.charAt(0) : '🪑'}
@@ -229,10 +326,18 @@
                 <div style="font-size:8px; margin-top:2px;">${seat ? seat.name : 'Seat '+(idx+1)}</div>
             `;
             grid.appendChild(el);
+
+            if (seat && seat.id !== socket.id) {
+                const pc = createPeerConnection(seat.id);
+                pc.createOffer().then(offer => {
+                    pc.setLocalDescription(offer);
+                    socket.emit('webrtc_offer', { targetId: seat.id, offer });
+                });
+            }
         });
     });
 
-    // PTT 15s Logic
+    // Fast & Smooth 15s PTT Mic System
     const pttBtn = document.getElementById('pttBtn');
     const timerTxt = document.getElementById('timerTxt');
 
@@ -241,14 +346,17 @@
         if(currentRoomType !== 'ptt' || isHoldingMic) return;
         isHoldingMic = true;
         pttSecondsLeft = 15;
+
+        if (localStream) localStream.getAudioTracks()[0].enabled = true;
         socket.emit('start_talking');
+
         pttBtn.style.background = "#00e676";
         timerTxt.innerText = `${pttSecondsLeft}s`;
 
         pttTimer = setInterval(() => {
             pttSecondsLeft--;
             timerTxt.innerText = `${pttSecondsLeft}s`;
-            if(pttSecondsLeft <= 0) { stopTalking(); timerTxt.innerText = "समय समाप्त!"; }
+            if(pttSecondsLeft <= 0) { stopTalking(); timerTxt.innerText = "Samay Samapt!"; }
         }, 1000);
     }
 
@@ -257,7 +365,10 @@
         if(currentRoomType !== 'ptt' || !isHoldingMic) return;
         isHoldingMic = false;
         clearInterval(pttTimer);
+
+        if (localStream) localStream.getAudioTracks()[0].enabled = false;
         socket.emit('stop_talking');
+
         pttBtn.style.background = "#e91e63";
     }
 
@@ -266,7 +377,6 @@
     pttBtn.addEventListener('touchstart', startTalking);
     pttBtn.addEventListener('touchend', stopTalking);
 
-    // Wallet & Gifts
     function sendGift(key) { socket.emit('send_gift', { giftKey: key }); }
     socket.on('update_wallet', (coins) => { document.getElementById('walletCoins').innerText = coins; });
     socket.on('gift_animation', (data) => {
@@ -276,11 +386,10 @@
         setTimeout(() => pop.style.display = 'none', 1500);
 
         const box = document.getElementById('chatBox');
-        box.innerHTML += `<div class="chat-bubble" style="background:#ff4081;">🎁 ${data.senderName} ने ${data.gift.name} ${data.gift.icon} भेजा!</div>`;
+        box.innerHTML += `<div class="chat-bubble" style="background:#ff4081;">🎁 ${data.senderName} ne ${data.gift.name} ${data.gift.icon} bheja!</div>`;
         box.scrollTop = box.scrollHeight;
     });
 
-    // Chat with Bubbles
     function sendChat() {
         const input = document.getElementById('chatInput');
         if(input.value.trim()) {
@@ -299,7 +408,7 @@
     function closeAdmin() { document.getElementById('adminModal').style.display = 'none'; }
     function loginAdmin() { socket.emit('admin_login', document.getElementById('adminPassInput').value); }
     socket.on('admin_auth_res', (d) => {
-        if(d.success) { isAdminLoggedIn = true; document.getElementById('adminStatus').style.display = 'block'; alert("एडमिन ऑन!"); }
+        if(d.success) { isAdminLoggedIn = true; document.getElementById('adminStatus').style.display = 'block'; alert("Admin On!"); }
         else alert(d.msg);
     });
 </script>
