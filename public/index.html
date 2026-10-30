@@ -1,416 +1,449 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChitChat Live - Final Party Room</title>
+    <title>ChitChat App</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background: #0b0b16; color: #fff; display: flex; justify-content: center; }
-        .app-container { width: 100%; max-width: 480px; height: 100vh; background: #151528; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #0d0f17;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding-bottom: 70px;
+        }
+        .header-top {
+            padding: 16px;
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+        .app-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin-top: 4px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .live-badge {
+            background: #052e16;
+            color: #22c55e;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid #15803d;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .live-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; }
         
-        .screen { display: none; flex: 1; flex-direction: column; overflow-y: auto; padding-bottom: 70px; }
-        .screen.active { display: flex; }
+        .container { padding: 0 16px; }
 
-        .login-box { position: absolute; inset: 0; background: #121222; z-index: 200; display: flex; flex-direction: column; justify-content: center; padding: 30px; }
-        .input-field { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #222238; color: #fff; outline: none; }
-        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #00e676; color: #000; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        /* Banner */
+        .hero-card {
+            background: linear-gradient(135deg, #1c1410 0%, #17110e 100%);
+            border: 1px solid #ff550044;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .hero-left { display: flex; align-items: center; gap: 15px; }
+        .wave-icon {
+            width: 50px;
+            height: 50px;
+            background: #1a1b26;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .hero-text h3 { font-size: 18px; color: #fff; font-weight: 700; margin-bottom: 4px; }
+        .hero-text p { font-size: 12px; color: #94a3b8; line-height: 1.4; }
+        .plus-btn {
+            background: #ff5500;
+            color: white;
+            border: none;
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-        .nav-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: #1e1e38; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #333; z-index: 100; }
-        .nav-item { background: none; border: none; color: #888; font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
-        .nav-item.active { color: #00e676; }
+        /* Tabs */
+        .filter-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+        .tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            background: #1e2230;
+            color: #94a3b8;
+            border: none;
+            cursor: pointer;
+        }
+        .tab.active { background: #ff5500; color: #fff; }
 
-        .p-15 { padding: 15px; }
-        .card { background: #222238; padding: 15px; border-radius: 12px; margin-bottom: 12px; cursor: pointer; border-left: 4px solid #ffd700; }
+        /* Empty State */
+        .empty-box {
+            background: #141722;
+            border: 1px solid #1e2230;
+            border-radius: 20px;
+            padding: 40px 20px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.8; }
+        .empty-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+        .empty-sub { font-size: 13px; color: #94a3b8; margin-bottom: 20px; }
+        .orange-outline-btn {
+            background: transparent;
+            border: 1px solid #ff5500;
+            color: #ff5500;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
 
-        .avatar-frame { width: 50px; height: 50px; border-radius: 50%; border: 3px solid #ffd700; display: flex; align-items: center; justify-content: center; background: #333; position: relative; font-weight: bold; }
-        .vip-badge { position: absolute; bottom: -4px; right: -4px; background: #ff4081; font-size: 9px; padding: 2px 5px; border-radius: 10px; color: #fff; }
+        /* Profile Styles */
+        .profile-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+        .avatar-box {
+            width: 65px;
+            height: 65px;
+            background: #ff5500;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+        }
+        .profile-name { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+        .verified-badge { color: #ff5500; font-size: 16px; }
+        .profile-id { font-size: 12px; color: #64748b; margin-top: 2px; }
 
-        .chat-bubble { background: linear-gradient(135deg, #6200ea, #b388ff); padding: 8px 12px; border-radius: 15px; margin: 4px 0; font-size: 13px; max-width: 80%; }
+        .wallet-card {
+            background: linear-gradient(135deg, #1c1410 0%, #17110e 100%);
+            border: 1px solid #ff550044;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .wallet-sub { font-size: 10px; letter-spacing: 1px; color: #ff5500; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; }
+        .wallet-amount { font-size: 28px; font-weight: 900; }
+        .wallet-amount span { font-size: 14px; font-weight: 500; color: #94a3b8; }
+        .wallet-icon { font-size: 28px; color: #ff5500; }
 
-        .seats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 15px; }
-        .seat { height: 75px; border-radius: 8px; background: #222238; border: 2px dashed #444; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; }
-        .seat.occupied { border: 2px solid #ffd700; background: #282848; }
-        .seat.talking { border: 2px solid #00e676; box-shadow: 0 0 10px #00e676; }
+        .section-label { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+        .section-desc { font-size: 12px; color: #64748b; margin-bottom: 14px; }
 
-        .ptt-container { text-align: center; padding: 10px; display: none; }
-        .ptt-btn { width: 80px; height: 80px; border-radius: 50%; border: none; background: #e91e63; color: white; font-weight: bold; cursor: pointer; user-select: none; }
+        .call-buttons { display: flex; gap: 12px; margin-bottom: 24px; }
+        .btn-call {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .btn-audio { background: #10b981; }
+        .btn-video { background: #3b82f6; }
 
-        .gift-popup { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); font-size: 70px; display: none; animation: popAnim 1.5s ease-out forwards; z-index: 300; pointer-events: none; }
-        @keyframes popAnim { 0% { opacity:0; transform:translate(-50%,-50%) scale(0.3); } 50% { opacity:1; transform:translate(-50%,-50%) scale(1.3); } 100% { opacity:0; transform:translate(-50%,-50%) scale(1); } }
+        .input-box {
+            width: 100%;
+            background: #141722;
+            border: 1px solid #1e2230;
+            padding: 14px;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            margin-bottom: 16px;
+            outline: none;
+        }
 
-        .admin-modal { display: none; position: absolute; inset: 0; background: rgba(0,0,0,0.85); padding: 20px; z-index: 150; }
+        .gender-options { display: flex; gap: 10px; margin-bottom: 24px; }
+        .gender-btn {
+            padding: 10px 18px;
+            background: #141722;
+            border: 1px solid #1e2230;
+            border-radius: 20px;
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .gender-btn.active { background: #ff550022; border-color: #ff5500; color: #ff5500; }
+
+        .orange-btn-full {
+            width: 100%;
+            background: #ff5500;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        /* Admin Tag */
+        .ui-tag {
+            background: #ff550022;
+            color: #ff5500;
+            border: 1px solid #ff550044;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #0d0f17;
+            border-top: 1px solid #1e2230;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0 12px 0;
+            background: rgba(13, 15, 23, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .nav-item.active { color: #ff5500; }
+        .nav-icon { font-size: 18px; }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-
-    <!-- LOGIN SCREEN -->
-    <div class="login-box" id="loginScreen">
-        <h2>🚀 ChitChat Live - Final</h2>
-        <input type="text" id="phoneInput" class="input-field" placeholder="Mobile Number">
-        <input type="text" id="usernameInput" class="input-field" placeholder="Your Name">
-        <select id="vipSelect" class="input-field">
-            <option value="1">VIP Level 1</option>
-            <option value="3">VIP Level 3</option>
-            <option value="5" selected>VIP Level 5 (Royal King 👑)</option>
-        </select>
-        <button class="btn" onclick="loginApp()">App Mein Pravesh Karein</button>
-    </div>
-
-    <!-- HOME SCREEN -->
-    <div class="screen active" id="screenHome">
-        <div class="p-15">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3>🏠 Live Party Rooms</h3>
-                <div style="font-size:13px; color:#ffd700;">🪙 <span id="walletCoins">10000</span></div>
-            </div>
-
-            <!-- Create Room Option (Video Feature) -->
-            <div style="margin: 15px 0; background: #222238; padding: 12px; border-radius: 8px;">
-                <input type="text" id="newRoomTitleInput" class="input-field" placeholder="Naya Room Title Likhein...">
-                <button class="btn" style="background:#00e676;" onclick="createNewRoom()">+ Apna Room Banayein</button>
-            </div>
-
-            <div style="margin-top: 15px;" id="roomListContainer">
-                <!-- Rooms will load here dynamically -->
-            </div>
-        </div>
-    </div>
-
-    <!-- ACTIVE ROOM SCREEN -->
-    <div class="screen" id="screenRoom">
-        <div class="p-15" style="display:flex; justify-content:space-between; align-items:center; background:#1e1e38;">
-            <h4 id="roomHeaderTitle">Room</h4>
-            <div>
-                <button onclick="openAdmin()" style="background:#ff9800; border:none; padding:5px 8px; border-radius:5px; color:#fff; cursor:pointer;">Admin</button>
-                <!-- Exit Room -> Goes back to Home screen safely as requested in video -->
-                <button onclick="exitRoomToHome()" style="background:#ff5252; border:none; padding:5px 8px; border-radius:5px; color:#fff; cursor:pointer;">Exit Room</button>
+    <!-- HOME VIEW -->
+    <div id="view-home" class="container">
+        <div class="header-top">
+            GOOD EVENING, GUEST
+            <div class="app-title">
+                Live rooms
+                <div class="live-badge"><div class="live-dot"></div> LIVE</div>
             </div>
         </div>
 
-        <div class="seats-grid" id="seatsGrid"></div>
-
-        <div class="ptt-container" id="pttContainer">
-            <button class="ptt-btn" id="pttBtn">HOLD<br>(15s)</button>
-            <p id="timerTxt" style="font-size:11px; color:#ffeb3b; margin-top:5px;">15s Hold Mic (Fast & Smooth)</p>
-        </div>
-
-        <div style="flex:1; background:#12121c; padding:10px; overflow-y:auto;" id="chatBox"></div>
-
-        <div style="padding:10px; background:#1e1e38; display:flex; gap:5px;">
-            <input type="text" id="chatInput" class="input-field" style="margin:0;" placeholder="Chat karein...">
-            <button onclick="sendChat()" style="background:#00e676; border:none; padding:8px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">Send</button>
-            <button onclick="sendGift('rocket')" style="background:#ff4081; border:none; padding:8px 10px; border-radius:8px; color:#fff; font-weight:bold; cursor:pointer;">🎁 Gift</button>
-        </div>
-    </div>
-
-    <!-- PROFILE SCREEN -->
-    <div class="screen" id="screenProfile">
-        <div class="p-15" style="text-align:center;">
-            <div style="width:70px; height:70px; border-radius:50%; border:3px solid #ffd700; margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:24px;" id="profileAvatar">👑</div>
-            <h3 id="profileName" style="margin-top:10px;">User</h3>
-            <p style="font-size:12px; color:#ffd700;" id="profileVip">VIP Level 5</p>
-        </div>
-    </div>
-
-    <div class="gift-popup" id="giftPopup">🚀</div>
-
-    <div class="admin-modal" id="adminModal">
-        <h3>Admin Access Panel</h3>
-        <input type="password" id="adminPassInput" class="input-field" placeholder="Password">
-        <button class="btn" onclick="loginAdmin()">Login</button>
-        <button class="btn" style="background:#555; color:#fff;" onclick="closeAdmin()">Band Karein</button>
-        <div id="adminStatus" style="margin-top:10px; color:#00e676; display:none;">Admin Active! Seat par click karke kick karein.</div>
-    </div>
-
-    <div id="audioContainer" style="display:none;"></div>
-
-    <div class="nav-bar">
-        <button class="nav-item active" onclick="switchTab('screenHome', this)">🏠 Home</button>
-        <button class="nav-item" onclick="switchTab('screenProfile', this)">👑 Profile</button>
-    </div>
-
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    const socket = io();
-    let localUser = null;
-    let currentRoomType = "";
-    let pttTimer = null;
-    let pttSecondsLeft = 15;
-    let isHoldingMic = false;
-    let isAdminLoggedIn = false;
-
-    let localStream = null;
-    let peerConnections = {};
-    const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
-
-    window.onload = () => {
-        const saved = localStorage.getItem('chitchat_user');
-        if (saved) {
-            localUser = JSON.parse(saved);
-            initUserSession();
-        }
-    };
-
-    async function loginApp() {
-        const phone = document.getElementById('phoneInput').value;
-        const username = document.getElementById('usernameInput').value;
-        const vipLevel = document.getElementById('vipSelect').value;
-        if (!phone) return alert("Number daalein!");
-
-        const res = await fetch('/api/login', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ phone, username, vipLevel })
-        });
-        const d = await res.json();
-        if (d.success) {
-            localUser = d.user;
-            localStorage.setItem('chitchat_user', JSON.stringify(localUser));
-            initUserSession();
-        }
-    }
-
-    function initUserSession() {
-        document.getElementById('loginScreen').style.display = 'none';
-        socket.emit('join_app', localUser);
-        document.getElementById('profileName').innerText = localUser.name;
-        document.getElementById('profileVip').innerText = `VIP Level ${localUser.vipLevel} 👑`;
-        document.getElementById('walletCoins').innerText = localUser.coins;
-    }
-
-    async function initMicrophone() {
-        try {
-            if (!localStream) {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                localStream.getAudioTracks()[0].enabled = false;
-            }
-        } catch (e) {
-            console.log("Mic Error: ", e);
-        }
-    }
-
-    function createPeerConnection(targetId) {
-        if (peerConnections[targetId]) return peerConnections[targetId];
-
-        const pc = new RTCPeerConnection(rtcConfig);
-        peerConnections[targetId] = pc;
-
-        if (localStream) {
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-        }
-
-        pc.ontrack = (event) => {
-            let audioEl = document.getElementById(`audio_${targetId}`);
-            if (!audioEl) {
-                audioEl = document.createElement('audio');
-                audioEl.id = `audio_${targetId}`;
-                audioEl.autoplay = true;
-                document.getElementById('audioContainer').appendChild(audioEl);
-            }
-            audioEl.srcObject = event.streams[0];
-        };
-
-        pc.onicecandidate = (event) => {
-            if (event.candidate) {
-                socket.emit('webrtc_ice', { targetId, candidate: event.candidate });
-            }
-        };
-
-        return pc;
-    }
-
-    socket.on('webrtc_offer', async ({ senderId, offer }) => {
-        const pc = createPeerConnection(senderId);
-        await pc.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket.emit('webrtc_answer', { targetId: senderId, answer });
-    });
-
-    socket.on('webrtc_answer', async ({ senderId, answer }) => {
-        const pc = peerConnections[senderId];
-        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
-    });
-
-    socket.on('webrtc_ice', async ({ senderId, candidate }) => {
-        const pc = peerConnections[senderId];
-        if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    });
-
-    function switchTab(screenId, btn) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        document.getElementById(screenId).classList.add('active');
-        btn.classList.add('active');
-    }
-
-    function switchScreen(screenId) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(screenId).classList.add('active');
-    }
-
-    // Room creation triggered from UI
-    function createNewRoom() {
-        const title = document.getElementById('newRoomTitleInput').value;
-        if(!title) return alert("Room ka title likhein!");
-        socket.emit('create_room', { roomTitle: title, roomType: 'ptt' });
-        document.getElementById('newRoomTitleInput').value = '';
-    }
-
-    socket.on('room_list_update', (rooms) => {
-        const container = document.getElementById('roomListContainer');
-        container.innerHTML = '';
-        rooms.forEach(room => {
-            const div = document.createElement('div');
-            div.className = 'card';
-            div.onclick = () => joinRoom(room.id);
-            div.innerHTML = `
-                <h4>🔥 ${room.title}</h4>
-                <p style="font-size:11px; color:#aaa;">Owner: ${room.owner} | Type: ${room.type.toUpperCase()}</p>
-            `;
-            container.appendChild(div);
-        });
-    });
-
-    async function joinRoom(roomId) {
-        await initMicrophone();
-        socket.emit('join_room', roomId);
-        switchScreen('screenRoom');
-    }
-
-    // Exit room safely returns to Home screen (as requested in video)
-    function exitRoomToHome() {
-        socket.emit('leave_seat');
-        if (localStream) localStream.getAudioTracks()[0].enabled = false;
-        switchScreen('screenHome');
-    }
-
-    socket.on('room_info', (room) => {
-        currentRoomType = room.type;
-        document.getElementById('roomHeaderTitle').innerText = room.title;
-        document.getElementById('pttContainer').style.display = room.type === 'ptt' ? 'block' : 'none';
-    });
-
-    socket.on('update_seats', (seats) => {
-        const grid = document.getElementById('seatsGrid');
-        grid.innerHTML = '';
-        seats.forEach((seat, idx) => {
-            const el = document.createElement('div');
-            el.className = `seat ${seat ? 'occupied' : ''} ${seat && seat.isTalking ? 'talking' : ''}`;
-            el.onclick = async () => {
-                if (isAdminLoggedIn) {
-                    socket.emit('admin_kick_seat', idx);
-                } else {
-                    if (seat) {
-                        socket.emit('leave_seat');
-                        if (localStream) localStream.getAudioTracks()[0].enabled = false;
-                    } else {
-                        socket.emit('take_seat', {seatIndex: idx});
-                        if (localStream && currentRoomType === 'open_mic') {
-                            localStream.getAudioTracks()[0].enabled = true;
-                        }
-                    }
-                }
-            };
-
-            el.innerHTML = `
-                <div class="avatar-frame">
-                    ${seat ? seat.name.charAt(0) : '🪑'}
-                    ${seat ? `<span class="vip-badge">V${seat.vipLevel}</span>` : ''}
+        <div class="hero-card">
+            <div class="hero-left">
+                <div class="wave-icon">🎙️</div>
+                <div class="hero-text">
+                    <h3>Your voice. Your room.</h3>
+                    <p>Create a live space and<br>bring your circle in.</p>
                 </div>
-                <div style="font-size:8px; margin-top:2px;">${seat ? seat.name : 'Seat '+(idx+1)}</div>
-            `;
-            grid.appendChild(el);
+            </div>
+            <button class="plus-btn" onclick="createNewRoom()">+</button>
+        </div>
 
-            if (seat && seat.id !== socket.id) {
-                const pc = createPeerConnection(seat.id);
-                pc.createOffer().then(offer => {
-                    pc.setLocalDescription(offer);
-                    socket.emit('webrtc_offer', { targetId: seat.id, offer });
-                });
+        <div class="filter-tabs">
+            <button class="tab active">All rooms</button>
+            <button class="tab">10-seat</button>
+            <button class="tab">15-sec PTT</button>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h4 style="font-size: 16px;">Happening now</h4>
+            <span style="font-size: 12px; color: #64748b;" id="room-count-label">0 rooms</span>
+        </div>
+
+        <div id="rooms-list-container">
+            <div class="empty-box">
+                <div class="empty-icon">📡</div>
+                <div class="empty-title">No active rooms yet</div>
+                <div class="empty-sub">कोई room नहीं है। अपना multi-group room बनाकर live शुरू करें।</div>
+                <button class="orange-outline-btn" onclick="createNewRoom()">Create your room</button>
+            </div>
+        </div>
+
+        <p style="text-align: center; color: #475569; font-size: 11px; margin-top: 30px;">
+            Real-time audio uses your device microphone permission.
+        </p>
+    </div>
+
+    <!-- PROFILE VIEW -->
+    <div id="view-profile" class="container hidden">
+        <div class="header-top">
+            YOUR PROFILE
+            <div class="profile-header" style="margin-top: 10px;">
+                <div class="avatar-box" id="avatar-initials">GV</div>
+                <div>
+                    <div class="profile-name"><span id="profile-display-title">Guest 8221</span> <span class="verified-badge">✔</span></div>
+                    <div class="profile-id" id="profile-display-id">9135658221</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="wallet-card">
+            <div>
+                <div class="wallet-sub">WALLET BALANCE</div>
+                <div class="wallet-amount"><span id="coin-balance">3,500</span> <span>coins</span></div>
+            </div>
+            <div class="wallet-icon">👛</div>
+        </div>
+
+        <div class="section-label">Quick calls</div>
+        <div class="section-desc">WebRTC call entry points for a live contact room.</div>
+
+        <div class="call-buttons">
+            <button class="btn-call btn-audio" onclick="alert('Starting WebRTC Audio Call...')">📞 Audio call</button>
+            <button class="btn-call btn-video" onclick="alert('Starting WebRTC Video Call...')">📹 Video call</button>
+        </div>
+
+        <div class="section-label">Profile details</div>
+        
+        <label style="font-size: 12px; color: #94a3b8; display: block; margin: 10px 0 6px 0;">Display name</label>
+        <input type="text" class="input-box" id="input-display-name" value="Guest 8221">
+
+        <label style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 8px;">Gender</label>
+        <div class="gender-options">
+            <button class="gender-btn" onclick="selectGender(this)">Female</button>
+            <button class="gender-btn" onclick="selectGender(this)">Male</button>
+            <button class="gender-btn active" onclick="selectGender(this)">Prefer not to say</button>
+        </div>
+
+        <button class="orange-btn-full" onclick="saveProfileChanges()">Save profile →</button>
+    </div>
+
+    <!-- ADMIN VIEW -->
+    <div id="view-admin" class="container hidden">
+        <div class="header-top">
+            CONTROL CENTER
+            <div class="app-title">
+                Admin panel
+                <span class="ui-tag">🔒 UI ONLY</span>
+            </div>
+        </div>
+
+        <div class="empty-box" style="text-align: left; background: #141722; padding: 16px; border-radius: 14px; margin-bottom: 20px;">
+            <div style="display: flex; gap: 10px; color: #38bdf8; font-size: 13px;">
+                <span>ℹ️</span>
+                <span>Password login is reserved for the next admin release. Room hosts can moderate seats here for now.</span>
+            </div>
+        </div>
+
+        <div class="section-label">Your hosted rooms</div>
+
+        <div class="empty-box" style="margin-top: 15px;">
+            <div class="empty-title">Create a room first</div>
+            <div class="empty-sub">Your room controls will appear here.</div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
+    <div class="bottom-nav">
+        <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
+            <div class="nav-icon">🏠</div>
+            <div>Home</div>
+        </div>
+        <div class="nav-item" id="nav-profile" onclick="switchTab('profile')">
+            <div class="nav-icon">👤</div>
+            <div>Profile</div>
+        </div>
+        <div class="nav-item" id="nav-admin" onclick="switchTab('admin')">
+            <div class="nav-icon">👑</div>
+            <div>Admin</div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all views
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-profile').classList.add('hidden');
+            document.getElementById('view-admin').classList.add('hidden');
+
+            // Reset active nav items
+            document.getElementById('nav-home').classList.remove('active');
+            document.getElementById('nav-profile').classList.remove('active');
+            document.getElementById('nav-admin').classList.remove('active');
+
+            // Show selected view
+            if(tabName === 'home') {
+                document.getElementById('view-home').classList.remove('hidden');
+                document.getElementById('nav-home').classList.add('active');
+            } else if(tabName === 'profile') {
+                document.getElementById('view-profile').classList.remove('hidden');
+                document.getElementById('nav-profile').classList.add('active');
+            } else if(tabName === 'admin') {
+                document.getElementById('view-admin').classList.remove('hidden');
+                document.getElementById('nav-admin').classList.add('active');
             }
-        });
-    });
-
-    // Fast & Smooth 15s PTT Mic System
-    const pttBtn = document.getElementById('pttBtn');
-    const timerTxt = document.getElementById('timerTxt');
-
-    function startTalking(e) {
-        if(e) e.preventDefault();
-        if(currentRoomType !== 'ptt' || isHoldingMic) return;
-        isHoldingMic = true;
-        pttSecondsLeft = 15;
-
-        if (localStream) localStream.getAudioTracks()[0].enabled = true;
-        socket.emit('start_talking');
-
-        pttBtn.style.background = "#00e676";
-        timerTxt.innerText = `${pttSecondsLeft}s`;
-
-        pttTimer = setInterval(() => {
-            pttSecondsLeft--;
-            timerTxt.innerText = `${pttSecondsLeft}s`;
-            if(pttSecondsLeft <= 0) { stopTalking(); timerTxt.innerText = "Samay Samapt!"; }
-        }, 1000);
-    }
-
-    function stopTalking(e) {
-        if(e) e.preventDefault();
-        if(currentRoomType !== 'ptt' || !isHoldingMic) return;
-        isHoldingMic = false;
-        clearInterval(pttTimer);
-
-        if (localStream) localStream.getAudioTracks()[0].enabled = false;
-        socket.emit('stop_talking');
-
-        pttBtn.style.background = "#e91e63";
-    }
-
-    pttBtn.addEventListener('mousedown', startTalking);
-    pttBtn.addEventListener('mouseup', stopTalking);
-    pttBtn.addEventListener('touchstart', startTalking);
-    pttBtn.addEventListener('touchend', stopTalking);
-
-    function sendGift(key) { socket.emit('send_gift', { giftKey: key }); }
-    socket.on('update_wallet', (coins) => { document.getElementById('walletCoins').innerText = coins; });
-    socket.on('gift_animation', (data) => {
-        const pop = document.getElementById('giftPopup');
-        pop.innerText = data.gift.icon;
-        pop.style.display = 'block';
-        setTimeout(() => pop.style.display = 'none', 1500);
-
-        const box = document.getElementById('chatBox');
-        box.innerHTML += `<div class="chat-bubble" style="background:#ff4081;">🎁 ${data.senderName} ne ${data.gift.name} ${data.gift.icon} bheja!</div>`;
-        box.scrollTop = box.scrollHeight;
-    });
-
-    function sendChat() {
-        const input = document.getElementById('chatInput');
-        if(input.value.trim()) {
-            socket.emit('send_chat', input.value);
-            input.value = '';
         }
-    }
 
-    socket.on('new_chat', (data) => {
-        const box = document.getElementById('chatBox');
-        box.innerHTML += `<div class="chat-bubble"><b>[VIP ${data.vipLevel}] ${data.sender}:</b> ${data.msg}</div>`;
-        box.scrollTop = box.scrollHeight;
-    });
+        function selectGender(element) {
+            let btns = document.querySelectorAll('.gender-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            element.classList.add('active');
+        }
 
-    function openAdmin() { document.getElementById('adminModal').style.display = 'block'; }
-    function closeAdmin() { document.getElementById('adminModal').style.display = 'none'; }
-    function loginAdmin() { socket.emit('admin_login', document.getElementById('adminPassInput').value); }
-    socket.on('admin_auth_res', (d) => {
-        if(d.success) { isAdminLoggedIn = true; document.getElementById('adminStatus').style.display = 'block'; alert("Admin On!"); }
-        else alert(d.msg);
-    });
-</script>
+        function saveProfileChanges() {
+            let newName = document.getElementById('input-display-name').value;
+            if(!newName) return alert('Please enter a display name');
+            
+            document.getElementById('profile-display-title').innerText = newName;
+            
+            // Get initials for avatar
+            let words = newName.trim().split(" ");
+            let initials = words[0][0].toUpperCase();
+            if(words.length > 1) initials += words[1][0].toUpperCase();
+            document.getElementById('avatar-initials').innerText = initials;
+
+            alert('Profile saved successfully!');
+        }
+
+        function createNewRoom() {
+            let rName = prompt("Enter Room Name:", "My Voice Lounge");
+            if(rName) {
+                let container = document.getElementById('rooms-list-container');
+                container.innerHTML = `
+                    <div class="hero-card" style="border-color: #ff5500;">
+                        <div>
+                            <h3>${rName}</h3>
+                            <p style="color:#22c55e;">● 1 Active Speaker (10-Seat Stage)</p>
+                        </div>
+                        <button class="orange-outline-btn" style="padding: 8px 16px;" onclick="alert('Joining Voice Room...')">Join</button>
+                    </div>
+                `;
+                document.getElementById('room-count-label').innerText = "1 room";
+            }
+        }
+    </script>
 </body>
 </html>
