@@ -26,10 +26,6 @@
         .hero-text p { font-size: 12px; color: #94a3b8; line-height: 1.4; }
         .plus-btn { background: #ff5500; color: white; border: none; width: 46px; height: 46px; border-radius: 14px; font-size: 24px; font-weight: bold; cursor: pointer; }
 
-        .filter-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
-        .tab { padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; background: #1e2230; color: #94a3b8; border: none; cursor: pointer; }
-        .tab.active { background: #ff5500; color: #fff; }
-
         .empty-box { background: #141722; border: 1px solid #1e2230; border-radius: 20px; padding: 40px 20px; text-align: center; margin-top: 10px; }
         .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.8; }
         .empty-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
@@ -40,7 +36,6 @@
         .avatar-box { width: 65px; height: 65px; background: #ff5500; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: bold; color: white; }
         .profile-name { font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
         .verified-badge { color: #ff5500; font-size: 16px; }
-        .profile-id { font-size: 12px; color: #64748b; margin-top: 2px; }
 
         .wallet-card { background: linear-gradient(135deg, #1c1410 0%, #17110e 100%); border: 1px solid #ff550044; border-radius: 20px; padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
         .wallet-sub { font-size: 10px; letter-spacing: 1px; color: #ff5500; font-weight: 800; text-transform: uppercase; margin-bottom: 6px; }
@@ -49,23 +44,33 @@
         .wallet-icon { font-size: 28px; color: #ff5500; }
 
         .section-label { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-        .section-desc { font-size: 12px; color: #64748b; margin-bottom: 14px; }
-
         .input-box { width: 100%; background: #141722; border: 1px solid #1e2230; padding: 14px; border-radius: 12px; color: white; font-size: 14px; margin-bottom: 16px; outline: none; }
-
         .orange-btn-full { width: 100%; background: #ff5500; color: white; border: none; padding: 16px; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; }
 
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(13, 15, 23, 0.95); border-top: 1px solid #1e2230; display: flex; justify-content: space-around; padding: 10px 0 12px 0; backdrop-filter: blur(10px); }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(13, 15, 23, 0.95); border-top: 1px solid #1e2230; display: flex; justify-content: space-around; padding: 10px 0 12px 0; backdrop-filter: blur(10px); z-index: 100; }
         .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #64748b; font-size: 11px; font-weight: 600; cursor: pointer; }
         .nav-item.active { color: #ff5500; }
         .nav-icon { font-size: 18px; }
 
         .hidden { display: none !important; }
 
-        /* Voice Stage Modal */
-        .stage-box { background: #141722; border: 1px solid #ff5500; border-radius: 20px; padding: 20px; text-align: center; margin-top: 20px; }
-        .mic-btn { background: #22c55e; color: white; border: none; padding: 15px 30px; font-size: 16px; font-weight: bold; border-radius: 30px; margin-top: 15px; cursor: pointer; }
-        .mic-btn.muted { background: #ef4444; }
+        /* 10-Seat Stage Layout */
+        .stage-box { background: #141722; border: 1px solid #ff5500; border-radius: 20px; padding: 20px; margin-top: 15px; text-align: center; }
+        .seats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 20px 0; }
+        .seat { background: #1e2230; border: 1px dashed #ff5500; border-radius: 12px; padding: 12px 5px; font-size: 11px; color: #94a3b8; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .seat.occupied { border: 1px solid #22c55e; color: #22c55e; background: #052e16; }
+        
+        .ptt-container { margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .mic-btn { background: #ff5500; color: white; border: none; padding: 14px 28px; font-size: 15px; font-weight: bold; border-radius: 30px; cursor: pointer; width: 100%; max-width: 250px; user-select: none; }
+        .mic-btn.active-ptt { background: #22c55e; }
+        .timer-display { font-size: 14px; font-weight: 700; color: #ff5500; }
+
+        /* App-Native Popup Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-card { background: #141722; border: 1px solid #ff5500; border-radius: 20px; padding: 24px; width: 100%; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-cancel { background: #1e2230; color: #94a3b8; border: none; padding: 12px; border-radius: 10px; flex: 1; font-weight: 600; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -88,7 +93,7 @@
                     <p>Create a live space and<br>bring your circle in.</p>
                 </div>
             </div>
-            <button class="plus-btn" onclick="createNewRoom()">+</button>
+            <button class="plus-btn" onclick="openCreateRoomModal()">+</button>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -96,21 +101,31 @@
             <span style="font-size: 12px; color: #64748b;" id="room-count-label">0 rooms</span>
         </div>
 
-        <!-- ACTIVE ROOMS / VOICE STAGE -->
+        <!-- ACTIVE ROOMS CONTAINER -->
         <div id="rooms-list-container">
             <div class="empty-box">
                 <div class="empty-icon">📡</div>
                 <div class="empty-title">No active rooms yet</div>
-                <div class="empty-sub">कोई room नहीं है। अपना multi-group room बनाकर live शुरू करें।</div>
-                <button class="orange-outline-btn" onclick="createNewRoom()">Create your room</button>
+                <div class="empty-sub">कोई room नहीं है। अपना 10-seat room बनाकर live शुरू करें।</div>
+                <button class="orange-outline-btn" onclick="openCreateRoomModal()">Create your room</button>
             </div>
         </div>
 
-        <!-- VOICE CALL STAGE (HIDDEN UNTIL JOINED) -->
+        <!-- 10-SEAT VOICE STAGE (HIDDEN UNTIL JOINED) -->
         <div id="voice-stage" class="stage-box hidden">
-            <h3 id="current-room-title">Voice Room</h3>
-            <p style="color: #22c55e; margin-top: 5px;">🎙️ Real-time Audio Connected</p>
-            <button id="mic-toggle-btn" class="mic-btn" onclick="toggleMic()">🎤 Mic ON</button>
+            <h3 id="current-room-title" style="font-size: 18px; margin-bottom: 4px;">Voice Room</h3>
+            <p style="font-size: 12px; color: #22c55e;">🎙️ 10-Seat Stage Active</p>
+            
+            <!-- 10 Seats Grid -->
+            <div class="seats-grid" id="seats-container"></div>
+
+            <!-- 15-Sec PTT Mechanism -->
+            <div class="ptt-container">
+                <div class="timer-display" id="ptt-timer">15s PTT Ready</div>
+                <button id="ptt-btn" class="mic-btn" onmousedown="startPTT()" onmouseup="stopPTT()" ontouchstart="startPTT(event)" ontouchend="stopPTT(event)">🎙️ Hold to Speak (15s)</button>
+            </div>
+
+            <button class="btn-cancel" style="width: 100%; margin-top: 15px;" onclick="leaveRoom()">Leave Room</button>
             <audio id="remote-audio" autoplay></audio>
         </div>
     </div>
@@ -122,8 +137,8 @@
             <div class="profile-header" style="margin-top: 10px;">
                 <div class="avatar-box" id="avatar-initials">GV</div>
                 <div>
-                    <div class="profile-name"><span id="profile-display-title">Guest 8221</span> <span class="verified-badge">✔</span></div>
-                    <div class="profile-id">9135658221</div>
+                    <div class="profile-name"><span id="profile-display-title">Guest User</span> <span class="verified-badge">✔</span></div>
+                    <div class="profile-id">ID: 9135658221</div>
                 </div>
             </div>
         </div>
@@ -138,8 +153,20 @@
 
         <div class="section-label">Profile details</div>
         <label style="font-size: 12px; color: #94a3b8; display: block; margin: 10px 0 6px 0;">Display name</label>
-        <input type="text" class="input-box" id="input-display-name" value="Guest 8221">
+        <input type="text" class="input-box" id="input-display-name" value="Guest User">
         <button class="orange-btn-full" onclick="saveProfileChanges()">Save profile →</button>
+    </div>
+
+    <!-- CREATE ROOM POPUP MODAL -->
+    <div id="create-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-title">Create 10-Seat Voice Room</div>
+            <input type="text" id="modal-room-name" class="input-box" placeholder="Enter Room Name (e.g. ChitChat Lounge)" style="margin-bottom: 15px;">
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeCreateRoomModal()">Cancel</button>
+                <button class="orange-btn-full" style="padding: 12px;" onclick="confirmCreateRoom()">Create Group</button>
+            </div>
+        </div>
     </div>
 
     <!-- BOTTOM NAVIGATION -->
@@ -158,17 +185,25 @@
         const socket = io();
         let localStream = null;
         let peerConnection = null;
-        let isMuted = false;
+        let pttInterval = null;
+        let pttCountdown = 15;
 
-        const rtcConfig = {
-            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-        };
+        const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
         socket.on('update-rooms', (rooms) => {
             const container = document.getElementById('rooms-list-container');
             document.getElementById('room-count-label').innerText = rooms.length + " rooms";
             
-            if(rooms.length === 0) return;
+            if(!rooms || rooms.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-box">
+                        <div class="empty-icon">📡</div>
+                        <div class="empty-title">No active rooms yet</div>
+                        <div class="empty-sub">कोई room नहीं है। अपना 10-seat room बनाकर live शुरू करें।</div>
+                        <button class="orange-outline-btn" onclick="openCreateRoomModal()">Create your room</button>
+                    </div>`;
+                return;
+            }
 
             container.innerHTML = '';
             rooms.forEach(r => {
@@ -176,42 +211,112 @@
                     <div class="hero-card" style="border-color: #ff5500;">
                         <div>
                             <h3>${r.name}</h3>
-                            <p style="color:#22c55e;">● Live Voice Room</p>
+                            <p style="color:#22c55e;">● 10-Seat Live Room</p>
                         </div>
-                        <button class="orange-outline-btn" style="padding: 8px 16px;" onclick="joinRoom('${r.id}', '${r.name}')">Join Voice</button>
+                        <button class="orange-outline-btn" style="padding: 8px 16px;" onclick="joinRoom('${r.id}', '${r.name}')">Join Room</button>
                     </div>
                 `;
             });
         });
 
-        function createNewRoom() {
-            let rName = prompt("Enter Room Name:", "ChitChat Lounge");
-            if(rName) {
-                socket.emit('create-room', rName);
-            }
+        function openCreateRoomModal() {
+            document.getElementById('modal-room-name').value = '';
+            document.getElementById('create-modal').classList.remove('hidden');
+        }
+
+        function closeCreateRoomModal() {
+            document.getElementById('create-modal').classList.add('hidden');
+        }
+
+        function confirmCreateRoom() {
+            let rName = document.getElementById('modal-room-name').value.trim();
+            if(!rName) return alert("Please enter a room name!");
+            socket.emit('create-room', rName);
+            closeCreateRoomModal();
         }
 
         async function joinRoom(roomId, roomName) {
+            document.getElementById('view-home').querySelector('.hero-card').classList.add('hidden');
             document.getElementById('rooms-list-container').classList.add('hidden');
             document.getElementById('voice-stage').classList.remove('hidden');
             document.getElementById('current-room-title').innerText = roomName;
 
-            // Request Microphone Access
+            renderSeats();
+
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                localStream.getAudioTracks()[0].enabled = false;
                 socket.emit('join-room', roomId);
                 setupWebRTC(roomId);
             } catch (err) {
-                alert("Microphone permission allowed nahi hai!");
+                alert("Microphone permission required for 15s PTT stage!");
             }
+        }
+
+        function renderSeats() {
+            const seatsContainer = document.getElementById('seats-container');
+            seatsContainer.innerHTML = '';
+            for(let i = 1; i <= 10; i++) {
+                seatsContainer.innerHTML += `
+                    <div class="seat ${i === 1 ? 'occupied' : ''}" id="seat-${i}">
+                        <span>🎙️</span>
+                        <span>Seat ${i}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function startPTT(e) {
+            if (e && e.type === 'touchstart') e.preventDefault();
+            if(!localStream) return;
+            
+            localStream.getAudioTracks()[0].enabled = true;
+            const btn = document.getElementById('ptt-btn');
+            const timerDisplay = document.getElementById('ptt-timer');
+            btn.classList.add('active-ptt');
+            btn.innerText = "🔴 Transmitting...";
+
+            pttCountdown = 15;
+            timerDisplay.innerText = `Time left: ${pttCountdown}s`;
+
+            clearInterval(pttInterval);
+            pttInterval = setInterval(() => {
+                pttCountdown--;
+                timerDisplay.innerText = `Time left: ${pttCountdown}s`;
+                if(pttCountdown <= 0) {
+                    stopPTT();
+                }
+            }, 1000);
+        }
+
+        function stopPTT(e) {
+            if (e && e.type === 'touchend') e.preventDefault();
+            if(!localStream) return;
+            
+            clearInterval(pttInterval);
+            localStream.getAudioTracks()[0].enabled = false;
+            const btn = document.getElementById('ptt-btn');
+            const timerDisplay = document.getElementById('ptt-timer');
+            btn.classList.remove('active-ptt');
+            btn.innerText = "🎙️ Hold to Speak (15s)";
+            timerDisplay.innerText = "15s PTT Ready";
+        }
+
+        function leaveRoom() {
+            if(localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            if(peerConnection) {
+                peerConnection.close();
+            }
+            document.getElementById('voice-stage').classList.add('hidden');
+            document.getElementById('view-home').querySelector('.hero-card').classList.remove('hidden');
+            document.getElementById('rooms-list-container').classList.remove('hidden');
         }
 
         function setupWebRTC(roomId) {
             peerConnection = new RTCPeerConnection(rtcConfig);
-
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-            });
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
             peerConnection.ontrack = (event) => {
                 document.getElementById('remote-audio').srcObject = event.streams[0];
@@ -245,21 +350,6 @@
                     await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
                 }
             });
-        }
-
-        function toggleMic() {
-            if (localStream) {
-                isMuted = !isMuted;
-                localStream.getAudioTracks()[0].enabled = !isMuted;
-                const btn = document.getElementById('mic-toggle-btn');
-                if (isMuted) {
-                    btn.innerText = "🔇 Muted";
-                    btn.classList.add('muted');
-                } else {
-                    btn.innerText = "🎤 Mic ON";
-                    btn.classList.remove('muted');
-                }
-            }
         }
 
         function switchTab(tab) {
